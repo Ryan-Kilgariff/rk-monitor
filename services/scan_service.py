@@ -7,6 +7,18 @@ from services.scoring_service import ScoringService, ScoreResult
 from services.prospect_service import ProspectService, ProspectResult
 from services.scan_repository import ScanRepository
 from services.monitoring_service import MonitoringService, ScanComparison
+from services.site_quality_service import (
+    SiteQualityService,
+    SiteQualityResult,
+)
+from services.content_quality_service import (
+    ContentQualityService,
+    ContentQualityResult,
+)
+from services.commercial_scoring_service import (
+    CommercialScoringService,
+    CommercialScoreResult,
+)
 @dataclass
 class FullScanResult:
     scan_result: ScanResult
@@ -19,34 +31,79 @@ class FullScanResult:
     prospect: ProspectResult
     scan_id: int
     comparison: ScanComparison
+    site_quality: SiteQualityResult
+    content_quality: ContentQualityResult
+    general_pages: list[CrawledPage]
+    commercial_score: CommercialScoreResult
 class ScanService:
     def run(
         self,
         url: str,
     ) -> FullScanResult:
+        # --------------------------------------------------
+        # 1. PRIMARY WEBSITE SCAN
+        # --------------------------------------------------
         scanner = WebsiteScanner()
-        scan_result = scanner.scan(url)
+        scan_result = scanner.scan(
+            url
+        )
         if (
             not scan_result.successful
             and not scan_result.dns_resolution_failed
             and not scan_result.connection_failed
         ):
             raise RuntimeError(
-            scan_result.error_message
-            or "Website scan failed."
-        )
+                scan_result.error_message
+                or "Website scan failed."
+            )
+        # --------------------------------------------------
+        # 2. DEFAULT VALUES
+        # --------------------------------------------------
         crawled_pages = []
+        general_pages = []
         booking_links = []
         booking_provider = None
         link_results = []
+        # --------------------------------------------------
+        # 3. WEBSITE CRAWLING
+        # --------------------------------------------------
         if scan_result.successful:
             crawler = CrawlService()
-            important_pages = crawler.find_important_pages(
-                scan_result.internal_links
+            important_pages = (
+                crawler.find_important_pages(
+                    scan_result.internal_links
+                )
             )
             crawled_pages = crawler.crawl(
                 important_pages
             )
+            # ----------------------------------------------
+            # GENERAL SITE DISCOVERY
+            # ----------------------------------------------
+            general_urls = [
+                scan_result.url
+            ]
+            discovered_urls = (
+                crawler.discover_pages(
+                    scan_result.internal_links
+                )
+            )
+            for discovered_url in discovered_urls:
+                if (
+                    discovered_url
+                    not in general_urls
+                ):
+                    general_urls.append(
+                        discovered_url
+                    )
+            general_pages = (
+                crawler.crawl_general_pages(
+                    general_urls
+                )
+            )
+            # ----------------------------------------------
+            # BOOKING DETECTION
+            # ----------------------------------------------
             all_booking_links = set(
                 scan_result.booking_links
             )
@@ -58,13 +115,46 @@ class ScanService:
             booking_links = sorted(
                 all_booking_links
             )
-            booking_provider = scanner.detect_booking_provider(
-                booking_links
+            booking_provider = (
+                scanner.detect_booking_provider(
+                    booking_links
+                )
             )
+            # ----------------------------------------------
+            # LINK HEALTH
+            # ----------------------------------------------
             link_checker = LinkChecker()
-            link_results = link_checker.check_many(
-                scan_result.internal_links
+            link_results = (
+                link_checker.check_many(
+                    scan_result.internal_links
+                )
             )
+        # --------------------------------------------------
+        # 4. SITE QUALITY
+        # --------------------------------------------------
+        site_quality_service = (
+            SiteQualityService()
+        )
+        site_quality = (
+            site_quality_service.analyse(
+                crawled_pages,
+                booking_links,
+            )
+        )
+        # --------------------------------------------------
+        # 5. CONTENT QUALITY
+        # --------------------------------------------------
+        content_quality_service = (
+            ContentQualityService()
+        )
+        content_quality = (
+            content_quality_service.analyse(
+                general_pages
+            )
+        )
+        # --------------------------------------------------
+        # 6. ISSUE ANALYSIS
+        # --------------------------------------------------
         issue_service = IssueService()
         issues = issue_service.analyse(
             scan_result=scan_result,
@@ -73,15 +163,46 @@ class ScanService:
             all_booking_links=booking_links,
             link_results=link_results,
         )
-        scoring_service = ScoringService()
-        score = scoring_service.calculate(
-            issues
+        # --------------------------------------------------
+        # 7. TECHNICAL SCORE
+        # --------------------------------------------------
+        scoring_service = (
+            ScoringService()
         )
-        prospect_service = ProspectService()
-        prospect = prospect_service.qualify(
-            score,
-            issues,
+        score = (
+            scoring_service.calculate(
+                issues
+            )
         )
+        # --------------------------------------------------
+        # 8. COMMERCIAL SCORE
+        # --------------------------------------------------
+        commercial_scoring_service = (
+            CommercialScoringService()
+        )
+        commercial_score = (
+            commercial_scoring_service.calculate(
+                technical_score=score,
+                site_quality=site_quality,
+                content_quality=content_quality,
+            )
+        )
+        # --------------------------------------------------
+        # 9. PROSPECT QUALIFICATION
+        # --------------------------------------------------
+        prospect_service = (
+            ProspectService()
+        )
+        prospect = (
+            prospect_service.qualify(
+                score,
+                commercial_score,
+                issues,
+            )
+        )
+        # --------------------------------------------------
+        # 10. SAVE SCAN
+        # --------------------------------------------------
         repository = ScanRepository()
         scan_id = repository.save(
             scan_result=scan_result,
@@ -91,6 +212,9 @@ class ScanService:
             booking_links=booking_links,
             overall_score=score.overall,
         )
+        # --------------------------------------------------
+        # 11. MONITORING COMPARISON
+        # --------------------------------------------------
         monitoring_service = (
             MonitoringService()
         )
@@ -99,14 +223,21 @@ class ScanService:
                 scan_result.url
             )
         )
+        # --------------------------------------------------
+        # 12. RETURN COMPLETE RESULT
+        # --------------------------------------------------
         return FullScanResult(
             scan_result=scan_result,
             crawled_pages=crawled_pages,
+            general_pages=general_pages,
             link_results=link_results,
             booking_links=booking_links,
             booking_provider=booking_provider,
             issues=issues,
             score=score,
+            site_quality=site_quality,
+            content_quality=content_quality,
+            commercial_score=commercial_score,
             prospect=prospect,
             scan_id=scan_id,
             comparison=comparison,

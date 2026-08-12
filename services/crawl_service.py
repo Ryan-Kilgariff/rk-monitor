@@ -14,6 +14,8 @@ class CrawledPage:
     heading_count: int = 0
     link_count: int = 0
     booking_links: list[str] | None = None
+    word_count: int = 0
+    content_text: str = ""
 class CrawlService:
     IMPORTANT_PAGE_TERMS = {
         "rooms": (
@@ -133,6 +135,12 @@ class CrawlService:
                 title = None
                 if soup.title and soup.title.string:
                     title = soup.title.string.strip()
+                content_text = self._extract_content_text(
+                    soup
+                )
+                word_count = len(
+                    content_text.split()
+                )
                 results.append(
                 CrawledPage(
                         url=response.url,
@@ -144,6 +152,8 @@ class CrawlService:
                         heading_count=heading_count,
                         link_count=link_count,
                         booking_links=booking_links,
+                        word_count=word_count,
+                        content_text=content_text,
                     )
                 )
             except requests.RequestException:
@@ -172,6 +182,12 @@ class CrawlService:
             "room availability",
             "reserve a room",
             "reserve your stay",
+            "make a reservation",
+            "make your reservation",
+            "book online",
+            "booking online",
+            "make a booking",
+            "book immediately online",
         )
         booking_domains = (
             "eviivo.com",
@@ -230,7 +246,17 @@ class CrawlService:
                 provider in domain
                 for provider in booking_domains
             )
-            if text_match or domain_match:
+            booking_path_terms = (
+                "/reservation",
+                "/reservations",
+                "/booking",
+                "/book-online",
+            )
+            path_match = any(
+                term in parsed.path.lower()
+                for term in booking_path_terms
+            )
+            if text_match or domain_match or path_match:
                 links.add(
                     absolute_url
                 )
@@ -298,3 +324,138 @@ class CrawlService:
                 if normalised_term in joined_path:
                     return page_type
         return None
+    def _extract_content_text(
+        self,
+        soup: BeautifulSoup,
+    ) -> str:
+        working_soup = BeautifulSoup(
+            str(soup),
+            "html.parser",
+        )
+        for element in working_soup.find_all(
+            [
+                "script",
+                "style",
+                "noscript",
+                "svg",
+                "nav",
+                "header",
+                "footer",
+                "form",
+            ]
+        ):
+            element.decompose()
+        text = working_soup.get_text(
+            " ",
+            strip=True,
+        )
+        return " ".join(
+            text.split()
+        )
+    def discover_pages(
+        self,
+        links: list[str],
+        max_pages: int = 20,
+    ) -> list[str]:
+        discovered = []
+        excluded_terms = (
+            "privacy",
+            "terms",
+            "cookie",
+            "login",
+            "admin",
+            "wp-admin",
+            "feed",
+            "sitemap",
+            "mailto:",
+            "tel:",
+        )
+        seen = set()
+        for url in links:
+            url = url.strip()
+            if not url:
+                continue
+            url_lower = url.lower()
+            if any(
+                term in url_lower
+                for term in excluded_terms
+            ):
+                continue
+            if url in seen:
+                continue
+            seen.add(url)
+            discovered.append(url)
+            if len(discovered) >= max_pages:
+                break
+        return discovered
+    def crawl_general_pages(
+        self,
+        urls: list[str],
+    ) -> list[CrawledPage]:
+        pages = []
+        for url in urls:
+            try:
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                    allow_redirects=True,
+                )
+                soup = BeautifulSoup(
+                    response.text,
+                    "html.parser",
+                )
+                title = None
+                if soup.title and soup.title.string:
+                    title = soup.title.string.strip()
+                content_text = (
+                    self._extract_content_text(
+                        soup
+                    )
+                )
+                word_count = len(
+                    content_text.split()
+                )
+                image_count = len(
+                    soup.find_all("img")
+                )
+                heading_count = len(
+                    soup.find_all(
+                        ["h1", "h2", "h3"]
+                    )
+                )
+                link_count = len(
+                    soup.find_all(
+                        "a",
+                        href=True,
+                    )
+                )
+                pages.append(
+                    CrawledPage(
+                        url=response.url,
+                        title=title,
+                        status_code=response.status_code,
+                        page_type="general",
+                        successful=True,
+                        image_count=image_count,
+                        heading_count=heading_count,
+                        link_count=link_count,
+                        booking_links=[],
+                        word_count=word_count,
+                        content_text=content_text,
+                    )
+                )
+            except requests.RequestException:
+                pages.append(
+                    CrawledPage(
+                        url=url,
+                        title=None,
+                        status_code=None,
+                        page_type="general",
+                        successful=False,
+                        booking_links=[],
+                        word_count=0,
+                        content_text="",
+                    )
+                )
+        return pages

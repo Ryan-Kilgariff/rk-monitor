@@ -171,8 +171,31 @@ class ReportService:
             f"{score.low_issues}"
         )
         print()
+        print()
+        print("COMMERCIAL WEBSITE SCORE")
+        print("-" * 60)
+        commercial = result.commercial_score
+        print(
+            f"Technical Score:       "
+            f"{commercial.technical_score} / 100"
+        )
+        print(
+            f"Hospitality Quality:   "
+            f"{commercial.site_quality_score} / 100"
+        )
+        print(
+            f"Content Quality:       "
+            f"{commercial.content_quality_score} / 100"
+        )
+        print("-" * 60)
+        print(
+            f"COMMERCIAL SCORE:      "
+            f"{commercial.commercial_score} / 100"
+        )
+        print()
         print("PROSPECT QUALIFICATION")
         print("-" * 60)
+        prospect = result.prospect
         print(
             f"Strength: "
             f"{prospect.strength}"
@@ -247,5 +270,115 @@ class ReportService:
             f"Scan saved successfully. "
             f"Scan ID: {result.scan_id}"
         )
+        print()
+        print()
+        print("SITE QUALITY")
+        print("-" * 60)
+        quality = result.site_quality
+        print(
+            f"Important Page Types: "
+            f"{quality.important_page_count}"
+        )
+        print(
+            f"Rooms / Accommodation: "
+            f"{'Yes' if quality.has_rooms else 'No'}"
+        )
+        print(
+            f"Room Pages Detected: "
+            f"{quality.room_page_count}"
+        )
+        print(
+            f"Room Images Detected: "
+            f"{quality.room_image_count}"
+        )
+        print(
+            f"Booking Route: "
+            f"{'Yes' if quality.has_booking_route else 'No'}"
+        )
+        print(
+            f"Guest Information: "
+            f"{'Yes' if quality.has_guest_information else 'No'}"
+        )
+        print(
+            f"Dedicated Contact Page: "
+            f"{'Yes' if quality.has_contact_page else 'No'}"
+        )
+        print()
+        print("ADDITIONAL HOSPITALITY FEATURES")
+        print(
+            f"Dining: "
+            f"{'Yes' if quality.has_dining else 'No'}"
+        )
+        print(
+            f"Events: "
+            f"{'Yes' if quality.has_events else 'No'}"
+        )
+        print(
+            f"Offers: "
+            f"{'Yes' if quality.has_offers else 'No'}"
+        )
+        print()
+        print(
+            f"Site Quality Score: "
+            f"{quality.quality_score} / 100"
+        )
+        print()
+        print("CONTENT QUALITY")
+        print("-" * 60)
+        content = result.content_quality
+        print(
+            f"Pages Analysed: "
+            f"{content.pages_checked}"
+        )
+        print(
+            f"Average Word Count: "
+            f"{content.average_word_count}"
+        )
+        print(
+            f"Thin Pages: "
+            f"{len(content.thin_pages)}"
+        )
+        print(
+            f"Duplicate Page Pairs: "
+            f"{len(content.duplicate_pairs)}"
+        )
+        print(
+            f"Content Depth Score: "
+            f"{content.content_depth_score} / 100"
+        )
+        print(
+            f"Site Pages Discovered: "
+            f"{len(result.general_pages)}"
+        )
+        if content.thin_pages:
+            print()
+            print("THIN PAGES")
+            for url in content.thin_pages:
+                print(
+                    f" - {url}"
+                )
+        if content.duplicate_pairs:
+            print()
+            print("POSSIBLE DUPLICATE CONTENT")
+            for pair in content.duplicate_pairs:
+                overlap_percent = round(
+                    pair.overlap * 100
+                )
+                print(
+                    f" - {overlap_percent}% content overlap"
+                )
+                print(
+                    f"   {pair.first_url}"
+                )
+                print(
+                    f"   {pair.second_url}"
+                )
+        print()
+        print("DISCOVERED PAGES")
+        for page in result.general_pages:
+            print(
+                f" - {page.url} "
+                f"({page.word_count} words)"
+            )
         print()
         print("=" * 60)

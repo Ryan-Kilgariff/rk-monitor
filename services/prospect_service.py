@@ -1,6 +1,9 @@
 from dataclasses import dataclass
 from services.issue_service import Issue
 from services.scoring_service import ScoreResult
+from services.commercial_scoring_service import (
+    CommercialScoreResult,
+)
 @dataclass
 class ProspectResult:
     strength: str
@@ -10,8 +13,12 @@ class ProspectService:
     def qualify(
         self,
         score: ScoreResult,
+        commercial_score: CommercialScoreResult,
         issues: list[Issue],
     ) -> ProspectResult:
+        commercial = (
+                commercial_score.commercial_score
+            )
         critical_technical_issue = any(
             issue.title in (
                 "Website domain could not be resolved",
@@ -23,7 +30,9 @@ class ProspectService:
         if critical_technical_issue:
             return ProspectResult(
                 strength="STRONG",
-                recommended_service="Website Recovery / Redesign",
+                recommended_service=(
+                    "Website Recovery / Redesign"
+                ),
                 reason=(
                     "A critical website availability "
                     "problem was detected."
@@ -39,21 +48,8 @@ class ProspectService:
             for issue in issues
             if issue.severity == "MEDIUM"
         )
-        significant_booking_issues = any(
-            issue.category == "Booking Journey"
-            and issue.severity in ("HIGH", "MEDIUM")
-            for issue in issues
-        )
-        room_issues = any(
-            issue.category == "Room Presentation"
-            for issue in issues
-        )
-        technical_issues = any(
-            issue.category == "Technical Health"
-            for issue in issues
-        )
         if (
-            score.overall <= 60
+            commercial <= 55
             or high_count >= 2
         ):
             return ProspectResult(
@@ -62,37 +58,26 @@ class ProspectService:
                     "Website Redesign"
                 ),
                 reason=(
-                    "Multiple significant issues "
-                    "or a low overall website score."
+                    "The website shows significant "
+                    "commercial or structural weaknesses."
                 ),
             )
-        if significant_booking_issues:
-            return ProspectResult(
-            strength="STRONG",
-            recommended_service=(
-                "Booking Journey Improvement"
-            ),
-            reason=(
-                "A significant booking journey "
-                "issue was detected."
-            ),
-        )
-        if (
-            score.overall <= 75
-            or high_count == 1
-            or medium_count >= 2
-        ):
+        if commercial <= 70:
             return ProspectResult(
                 strength="GOOD",
                 recommended_service=(
-                    "Website Improvement"
+                    "Website Improvement / Redesign"
                 ),
                 reason=(
-                    "Several meaningful improvement "
-                    "opportunities were detected."
+                    "Meaningful hospitality structure "
+                    "or content weaknesses were detected."
                 ),
             )
-        if room_issues or technical_issues:
+        if (
+            commercial <= 82
+            or high_count == 1
+            or medium_count >= 2
+        ):
             return ProspectResult(
                 strength="POSSIBLE",
                 recommended_service=(
@@ -100,16 +85,14 @@ class ProspectService:
                 ),
                 reason=(
                     "Some commercially relevant "
-                    "issues were detected."
+                    "improvement opportunities were detected."
                 ),
             )
         return ProspectResult(
             strength="WEAK",
-            recommended_service=(
-                "RK Monitor"
-            ),
+            recommended_service="RK Monitor",
             reason=(
-                "No major redesign-level problems "
+                "No major redesign-level weaknesses "
                 "were detected by the current rules."
             ),
         )

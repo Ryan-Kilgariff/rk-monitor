@@ -217,6 +217,12 @@ class WebsiteScanner:
             "reserve a room",
             "reserve your stay",
             "hotel booking",
+            "make a reservation",
+            "make your reservation",
+            "book online",
+            "booking online",
+            "make a booking",
+            "book immediately online",
         )
         hotel_booking_domains = (
             "eviivo.com",
