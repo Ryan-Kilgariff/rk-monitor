@@ -22,7 +22,6 @@ def initialize_database() -> None:
             )
             """
         )
-
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS scans (
@@ -34,14 +33,33 @@ def initialize_database() -> None:
                 has_https INTEGER NOT NULL DEFAULT 0,
                 has_mobile_viewport INTEGER NOT NULL DEFAULT 0,
                 has_google_analytics INTEGER NOT NULL DEFAULT 0,
+                booking_provider TEXT,
                 booking_links_found INTEGER NOT NULL DEFAULT 0,
                 internal_links_found INTEGER NOT NULL DEFAULT 0,
+                broken_links_found INTEGER NOT NULL DEFAULT 0,
+                overall_score INTEGER,
                 scan_successful INTEGER NOT NULL DEFAULT 0,
                 error_message TEXT,
                 scanned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
                 FOREIGN KEY (website_id)
                     REFERENCES websites(id)
+            )
+            """
+        )
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS issues (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                scan_id INTEGER NOT NULL,
+                severity TEXT NOT NULL,
+                category TEXT NOT NULL,
+                title TEXT NOT NULL,
+                evidence TEXT,
+                commercial_impact TEXT,
+                recommended_action TEXT,
+                created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (scan_id)
+                    REFERENCES scans(id)
             )
             """
         )
