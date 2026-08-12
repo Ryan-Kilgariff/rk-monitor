@@ -33,6 +33,8 @@ class ScanRepository:
                     has_https,
                     has_mobile_viewport,
                     has_google_analytics,
+                    ssl_verification_failed,
+                    error_message,
                     booking_provider,
                     booking_links_found,
                     internal_links_found,
@@ -41,7 +43,7 @@ class ScanRepository:
                     scan_successful,
                     error_message
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     website_id,
@@ -51,6 +53,8 @@ class ScanRepository:
                     int(scan_result.has_https),
                     int(scan_result.has_mobile_viewport),
                     int(scan_result.has_google_analytics),
+                    int(scan_result.ssl_verification_failed),
+                    scan_result.ssl_error_message,
                     booking_provider,
                     len(booking_links),
                     len(scan_result.internal_links),

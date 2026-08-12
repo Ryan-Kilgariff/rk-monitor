@@ -12,6 +12,23 @@ class ProspectService:
         score: ScoreResult,
         issues: list[Issue],
     ) -> ProspectResult:
+        critical_technical_issue = any(
+            issue.title in (
+                "Website domain could not be resolved",
+                "Website connection failed",
+                "Homepage returned an error",
+            )
+            for issue in issues
+        )
+        if critical_technical_issue:
+            return ProspectResult(
+                strength="STRONG",
+                recommended_service="Website Recovery / Redesign",
+                reason=(
+                    "A critical website availability "
+                    "problem was detected."
+                ),
+            )
         high_count = sum(
             1
             for issue in issues
@@ -22,8 +39,9 @@ class ProspectService:
             for issue in issues
             if issue.severity == "MEDIUM"
         )
-        booking_issues = any(
+        significant_booking_issues = any(
             issue.category == "Booking Journey"
+            and issue.severity in ("HIGH", "MEDIUM")
             for issue in issues
         )
         room_issues = any(
@@ -48,17 +66,17 @@ class ProspectService:
                     "or a low overall website score."
                 ),
             )
-        if booking_issues:
+        if significant_booking_issues:
             return ProspectResult(
-                strength="STRONG",
-                recommended_service=(
-                    "Booking Journey Improvement"
-                ),
-                reason=(
-                    "Commercial booking issues "
-                    "were detected."
-                ),
-            )
+            strength="STRONG",
+            recommended_service=(
+                "Booking Journey Improvement"
+            ),
+            reason=(
+                "A significant booking journey "
+                "issue was detected."
+            ),
+        )
         if (
             score.overall <= 75
             or high_count == 1

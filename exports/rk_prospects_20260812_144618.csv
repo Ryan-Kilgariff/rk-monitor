@@ -1,0 +1,6 @@
+URL,Score,Strength,Recommended Service,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Top Problem,Scan Successful,Error
+https://www.cathgate.co.uk/,100,WEAK,RK Monitor,0,0,0,Cloudbeds,2,,Yes,
+https://www.hotelrelish.co.uk/,,,,,,,,,,No,"HTTPSConnectionPool(host='www.hotelrelish.co.uk', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1081)')))"
+https://thehouseatramsgate.co.uk/,98,WEAK,RK Monitor,0,0,2,Eviivo,1,Google Analytics not detected,Yes,
+https://www.stonecourthouse.com/,95,STRONG,Booking Journey Improvement,1,0,0,,0,No room booking route detected,Yes,
+https://whodathoughtit.com/,99,STRONG,Booking Journey Improvement,0,0,1,,1,Booking provider not recognised,Yes,

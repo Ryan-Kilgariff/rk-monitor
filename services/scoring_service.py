@@ -26,6 +26,11 @@ class ScoringService:
         "MEDIUM": 15,
         "LOW": 5,
     }
+    CRITICAL_TITLES = {
+        "Website domain could not be resolved",
+        "Website connection failed",
+        "Homepage returned an error",
+    }
     def calculate(
         self,
         issues: list[Issue],
@@ -46,6 +51,13 @@ class ScoringService:
                 issue.severity,
                 0,
             )
+            if issue.title in self.CRITICAL_TITLES:
+                penalty = 100
+            else:
+                penalty = self.PENALTIES.get(
+                    issue.severity,
+                    0,
+                )
             if issue.severity == "HIGH":
                 high_issues += 1
             elif issue.severity == "MEDIUM":

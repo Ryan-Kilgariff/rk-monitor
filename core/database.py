@@ -33,6 +33,8 @@ def initialize_database() -> None:
                 has_https INTEGER NOT NULL DEFAULT 0,
                 has_mobile_viewport INTEGER NOT NULL DEFAULT 0,
                 has_google_analytics INTEGER NOT NULL DEFAULT 0,
+                ssl_verification_failed INTEGER NOT NULL DEFAULT 0,
+                ssl_error_message TEXT,
                 booking_provider TEXT,
                 booking_links_found INTEGER NOT NULL DEFAULT 0,
                 internal_links_found INTEGER NOT NULL DEFAULT 0,

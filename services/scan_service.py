@@ -26,42 +26,45 @@ class ScanService:
     ) -> FullScanResult:
         scanner = WebsiteScanner()
         scan_result = scanner.scan(url)
-        if not scan_result.successful:
+        if (
+            not scan_result.successful
+            and not scan_result.dns_resolution_failed
+            and not scan_result.connection_failed
+        ):
             raise RuntimeError(
-                scan_result.error_message
-                or "Website scan failed."
-            )
-        crawler = CrawlService()
-        important_pages = (
-            crawler.find_important_pages(
+            scan_result.error_message
+            or "Website scan failed."
+        )
+        crawled_pages = []
+        booking_links = []
+        booking_provider = None
+        link_results = []
+        if scan_result.successful:
+            crawler = CrawlService()
+            important_pages = crawler.find_important_pages(
                 scan_result.internal_links
             )
-        )
-        crawled_pages = crawler.crawl(
-            important_pages
-        )
-        all_booking_links = set(
-            scan_result.booking_links
-        )
-        for page in crawled_pages:
-            if page.booking_links:
-                all_booking_links.update(
-                    page.booking_links
-                )
-        booking_links = sorted(
-            all_booking_links
-        )
-        booking_provider = (
-            scanner.detect_booking_provider(
+            crawled_pages = crawler.crawl(
+                important_pages
+            )
+            all_booking_links = set(
+                scan_result.booking_links
+            )
+            for page in crawled_pages:
+                if page.booking_links:
+                    all_booking_links.update(
+                        page.booking_links
+                    )
+            booking_links = sorted(
+                all_booking_links
+            )
+            booking_provider = scanner.detect_booking_provider(
                 booking_links
             )
-        )
-        link_checker = LinkChecker()
-        link_results = (
-            link_checker.check_many(
+            link_checker = LinkChecker()
+            link_results = link_checker.check_many(
                 scan_result.internal_links
             )
-        )
         issue_service = IssueService()
         issues = issue_service.analyse(
             scan_result=scan_result,

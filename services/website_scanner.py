@@ -1,3 +1,7 @@
+import requests
+import urllib3
+from requests.exceptions import SSLError
+from requests.exceptions import ConnectionError
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlparse
 import time
@@ -15,6 +19,10 @@ class ScanResult:
     booking_links: list[str]
     internal_links: list[str]
     successful: bool
+    ssl_verification_failed: bool
+    ssl_error_message: str | None
+    dns_resolution_failed: bool
+    connection_failed: bool
     error_message: str | None = None
 class WebsiteScanner:
     def __init__(self, timeout: int = 10):
@@ -27,13 +35,37 @@ class WebsiteScanner:
         }
     def scan(self, url: str) -> ScanResult:
         url = self._normalise_url(url)
+        ssl_verification_failed = False
+        ssl_error_message = None
+        dns_resolution_failed = False
+        connection_failed = False
         try:
             started = time.perf_counter()
-            response = requests.get(
-                url,
-                headers=self.headers,
-                timeout=self.timeout,
-                allow_redirects=True,
+            try:
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                    allow_redirects=True,
+                    verify=True,
+                )
+            except SSLError as exc:
+                ssl_verification_failed = True
+                ssl_error_message = str(exc)
+                response = requests.get(
+                    url,
+                    headers=self.headers,
+                    timeout=self.timeout,
+                    allow_redirects=True,
+                    verify=False,
+                )
+            response_time = (
+                time.perf_counter()
+                - started
+            )
+            soup = BeautifulSoup(
+                response.text,
+                "html.parser",
             )
             response_time = time.perf_counter() - started
             soup = BeautifulSoup(response.text, "html.parser")
@@ -41,6 +73,9 @@ class WebsiteScanner:
             mobile_viewport = self._has_mobile_viewport(soup)
             google_analytics = self._has_google_analytics(
                 response.text
+            )
+            urllib3.disable_warnings(
+                urllib3.exceptions.InsecureRequestWarning
             )
             internal_links = self._get_internal_links(
                 response.url,
@@ -61,6 +96,37 @@ class WebsiteScanner:
                 booking_links=booking_links,
                 internal_links=internal_links,
                 successful=True,
+                ssl_verification_failed=ssl_verification_failed,
+                ssl_error_message=ssl_error_message,
+                dns_resolution_failed=False,
+                connection_failed=False,
+            )
+        except ConnectionError as exc:
+            error_text = str(exc)
+            if (
+                "NameResolutionError" in error_text
+                or "Failed to resolve" in error_text
+                or "getaddrinfo failed" in error_text
+            ):
+                dns_resolution_failed = True
+            else:
+                connection_failed = True
+            return ScanResult(
+                url=url,
+                status_code=None,
+                response_time=None,
+                page_title=None,
+                has_https=url.startswith("https://"),
+                has_mobile_viewport=False,
+                has_google_analytics=False,
+                booking_links=[],
+                internal_links=[],
+                successful=False,
+                ssl_verification_failed=False,
+                ssl_error_message=None,
+                dns_resolution_failed=False,
+                connection_failed=False,
+                error_message=error_text,
             )
         except requests.RequestException as exc:
             return ScanResult(
@@ -75,6 +141,10 @@ class WebsiteScanner:
                 internal_links=[],
                 successful=False,
                 error_message=str(exc),
+                ssl_verification_failed=ssl_verification_failed,
+                ssl_error_message=ssl_error_message,
+                dns_resolution_failed=False,
+                connection_failed=False,
             )
     def _normalise_url(self, url: str) -> str:
         url = url.strip()
@@ -158,6 +228,8 @@ class WebsiteScanner:
             "guestline.net",
             "synxis.com",
             "bookingbutton.com",
+            "freeonlinebooking.com",
+            "direct-book.com",
         )
         excluded_domains = (
             "facebook.com",
@@ -230,6 +302,8 @@ class WebsiteScanner:
             "guestline.net": "Guestline",
             "synxis.com": "SynXis",
             "bookingbutton.com": "BookingButton",
+            "freeonlinebooking.com": "FreeOnlineBooking",
+            "direct-book.com": "Direct Book",
         }
         for link in booking_links:
             link_lower = link.lower()

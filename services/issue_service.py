@@ -27,6 +27,7 @@ class IssueService:
         )
         issues.extend(
             self._analyse_booking_journey(
+                scan_result,
                 crawled_pages,
                 booking_provider,
                 all_booking_links,
@@ -161,19 +162,87 @@ class IssueService:
                     ),
                 )
             )
+        if scan_result.ssl_verification_failed:
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Technical Health",
+                    title="SSL certificate verification problem",
+                    evidence=(
+                        scan_result.ssl_error_message
+                        or "SSL verification failed."
+                    ),
+                    commercial_impact=(
+                        "Some browsers, integrations or "
+                        "automated services may have difficulty "
+                        "establishing a trusted HTTPS connection."
+                    ),
+                    recommended_action=(
+                        "Review the SSL certificate chain, "
+                        "intermediate certificates and hosting "
+                        "configuration."
+                    ),
+                )
+            )
+        if scan_result.dns_resolution_failed:
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Technical Health",
+                    title="Website domain could not be resolved",
+                    evidence=(
+                        scan_result.error_message
+                        or "DNS resolution failed."
+                    ),
+                    commercial_impact=(
+                        "Guests may be unable to access "
+                        "the property website at all."
+                    ),
+                    recommended_action=(
+                        "Review the domain DNS configuration, "
+                        "nameservers and hosting records."
+                    ),
+                )
+            )
+        if scan_result.connection_failed:
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Technical Health",
+                    title="Website connection failed",
+                    evidence=(
+                        scan_result.error_message
+                        or "Connection failed."
+                    ),
+                    commercial_impact=(
+                        "Guests may be unable to reliably "
+                        "access the property website."
+                    ),
+                    recommended_action=(
+                        "Review hosting availability, "
+                        "server configuration and network connectivity."
+                    ),
+                )
+            )
         return issues
     def _analyse_booking_journey(
         self,
+        scan_result: ScanResult,
         crawled_pages: list[CrawledPage],
         booking_provider: str | None,
         all_booking_links: list[str],
     ) -> list[Issue]:
         issues = []
+        if (
+            scan_result.dns_resolution_failed
+            or scan_result.connection_failed
+        ):
+            return []
         room_pages = [
-            page
-            for page in crawled_pages
-            if page.page_type == "rooms"
-        ]
+                    page
+                    for page in crawled_pages
+                    if page.page_type == "rooms"
+                ]
         if not all_booking_links:
             issues.append(
                 Issue(

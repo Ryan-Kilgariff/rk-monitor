@@ -1,0 +1,6 @@
+URL,Score,Strength,Recommended Service,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Top Problem,Scan Successful,Error
+https://www.cathgate.co.uk/,100,WEAK,RK Monitor,0,0,0,Cloudbeds,2,,Yes,
+https://www.hotelrelish.co.uk/,85,STRONG,Website Redesign,4,0,0,,0,SSL certificate verification problem,Yes,
+https://thehouseatramsgate.co.uk/,98,WEAK,RK Monitor,0,0,2,Eviivo,1,Google Analytics not detected,Yes,
+https://www.stonecourthouse.com/,95,STRONG,Booking Journey Improvement,1,0,0,,0,No room booking route detected,Yes,
+https://whodathoughtit.com/,99,STRONG,Booking Journey Improvement,0,0,1,,1,Booking provider not recognised,Yes,

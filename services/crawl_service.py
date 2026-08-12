@@ -183,6 +183,8 @@ class CrawlService:
             "guestline.net",
             "synxis.com",
             "bookingbutton.com",
+            "freeonlinebooking.com",
+            "direct-book.com",
         )
         excluded_domains = (
             "facebook.com",

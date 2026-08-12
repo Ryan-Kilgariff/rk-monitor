@@ -36,6 +36,10 @@ class ReportService:
             f"{'Yes' if scan.has_https else 'No'}"
         )
         print(
+            f"SSL Verification: "
+            f"{'FAILED' if scan.ssl_verification_failed else 'Passed'}"
+        )
+        print(
             f"Mobile Viewport: "
             f"{'Yes' if scan.has_mobile_viewport else 'No'}"
         )
