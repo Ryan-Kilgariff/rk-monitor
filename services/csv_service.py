@@ -70,6 +70,12 @@ class CsvService:
             "Top Problem",
             "Scan Successful",
             "Error",
+            "Commercial Score",
+            "Site Quality Score",
+            "Content Quality Score",
+            "Primary Problem",
+            "Outreach Angle",
+            "Supporting Reasons",
         ]
         with path.open(
             "w",
@@ -98,7 +104,7 @@ class CsvService:
                                 result.scan_result.url
                             ),
                             "Score": (
-                                result.score.overall
+                                result.commercial_score.commercial_score
                             ),
                             "Strength": (
                                 result.prospect.strength
@@ -132,6 +138,32 @@ class CsvService:
                                 "Yes"
                             ),
                             "Error": "",
+                            "Commercial Score": (
+                                result.commercial_score
+                                .commercial_score
+                            ),
+                            "Site Quality Score": (
+                                result.site_quality
+                                .quality_score
+                            ),
+                            "Content Quality Score": (
+                                result.content_quality
+                                .content_depth_score
+                            ),
+                            "Primary Problem": (
+                                result.prospect
+                                .primary_problem
+                            ),
+                            "Outreach Angle": (
+                                result.prospect
+                                .outreach_angle
+                            ),
+                            "Supporting Reasons": (
+                                " | ".join(
+                                    result.prospect
+                                    .supporting_reasons
+                                )
+                            ),
                         }
                     )
                 else:

@@ -80,22 +80,27 @@ class ScanService:
             # ----------------------------------------------
             # GENERAL SITE DISCOVERY
             # ----------------------------------------------
-            general_urls = [
-                scan_result.url
-            ]
-            discovered_urls = (
-                crawler.discover_pages(
+            general_urls = []
+            seen_general_urls = set()
+            candidate_urls = [
+                scan_result.url,
+                *crawler.discover_pages(
                     scan_result.internal_links
+                ),
+            ]
+            for candidate_url in candidate_urls:
+                normalised_url = (
+                    candidate_url.rstrip("/")
+                    + "/"
                 )
-            )
-            for discovered_url in discovered_urls:
-                if (
-                    discovered_url
-                    not in general_urls
-                ):
-                    general_urls.append(
-                        discovered_url
-                    )
+                if normalised_url in seen_general_urls:
+                    continue
+                seen_general_urls.add(
+                    normalised_url
+                )
+                general_urls.append(
+                    candidate_url
+                )
             general_pages = (
                 crawler.crawl_general_pages(
                     general_urls

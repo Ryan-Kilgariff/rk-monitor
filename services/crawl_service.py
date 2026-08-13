@@ -275,6 +275,16 @@ class CrawlService:
                 "bedroom",
                 "bedrooms",
                 "stay",
+                "double",
+                "twin",
+                "single",
+                "family",
+                "suite",
+                "king",
+                "superior",
+                "deluxe",
+                "ensuite",
+                "en-suite",
             ),
             "offers": (
                 "offer",
@@ -430,12 +440,25 @@ class CrawlService:
                         href=True,
                     )
                 )
+                parsed = urlparse(response.url)
+                path = parsed.path.lower().strip("/")
+                path_words = (
+                    path.replace("-", " ")
+                    .replace("_", " ")
+                    .split()
+                )
+                page_type = self._classify_page(
+                    path,
+                    path_words,
+                )
+                if page_type is None:
+                    page_type = "general"
                 pages.append(
                     CrawledPage(
                         url=response.url,
                         title=title,
                         status_code=response.status_code,
-                        page_type="general",
+                        page_type=page_type,
                         successful=True,
                         image_count=image_count,
                         heading_count=heading_count,
@@ -451,7 +474,7 @@ class CrawlService:
                         url=url,
                         title=None,
                         status_code=None,
-                        page_type="general",
+                        page_type=page_type,
                         successful=False,
                         booking_links=[],
                         word_count=0,

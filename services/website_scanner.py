@@ -103,14 +103,30 @@ class WebsiteScanner:
             )
         except ConnectionError as exc:
             error_text = str(exc)
-            if (
-                "NameResolutionError" in error_text
-                or "Failed to resolve" in error_text
-                or "getaddrinfo failed" in error_text
-            ):
-                dns_resolution_failed = True
-            else:
-                connection_failed = True
+            error_lower = error_text.lower()
+            ssl_handshake_failed = any(
+                term in error_lower
+                for term in (
+                    "handshake failure",
+                    "ssl handshake",
+                    "tlsv1 alert",
+                    "sslv3 alert",
+                    "wrong version number",
+                    "protocol version",
+                )
+            )
+            dns_resolution_failed = any(
+                term in error_lower
+                for term in (
+                    "nameresolutionerror",
+                    "failed to resolve",
+                    "getaddrinfo failed",
+                    "name or service not known",
+                )
+            )
+            connection_failed = (
+                not dns_resolution_failed
+            )
             return ScanResult(
                 url=url,
                 status_code=None,
@@ -122,13 +138,39 @@ class WebsiteScanner:
                 booking_links=[],
                 internal_links=[],
                 successful=False,
-                ssl_verification_failed=False,
-                ssl_error_message=None,
-                dns_resolution_failed=False,
-                connection_failed=False,
+                ssl_verification_failed=ssl_handshake_failed,
+                ssl_error_message=(
+                    error_text
+                    if ssl_handshake_failed
+                    else None
+                ),
+                dns_resolution_failed=dns_resolution_failed,
+                connection_failed=connection_failed,
                 error_message=error_text,
             )
         except requests.RequestException as exc:
+            error_text = str(exc)
+            error_lower = error_text.lower()
+            ssl_handshake_failed = any(
+                term in error_lower
+                for term in (
+                    "handshake failure",
+                    "ssl handshake",
+                    "tlsv1 alert",
+                    "sslv3 alert",
+                    "wrong version number",
+                    "protocol version",
+                )
+            )
+            dns_resolution_failed = any(
+                term in error_lower
+                for term in (
+                    "nameresolutionerror",
+                    "failed to resolve",
+                    "getaddrinfo failed",
+                    "name or service not known",
+                )
+            )
             return ScanResult(
                 url=url,
                 status_code=None,
@@ -140,11 +182,17 @@ class WebsiteScanner:
                 booking_links=[],
                 internal_links=[],
                 successful=False,
-                error_message=str(exc),
-                ssl_verification_failed=ssl_verification_failed,
-                ssl_error_message=ssl_error_message,
-                dns_resolution_failed=False,
-                connection_failed=False,
+                ssl_verification_failed=ssl_handshake_failed,
+                ssl_error_message=(
+                    error_text
+                    if ssl_handshake_failed
+                    else None
+                ),
+                dns_resolution_failed=dns_resolution_failed,
+                connection_failed=(
+                    not dns_resolution_failed
+                ),
+                error_message=error_text,
             )
     def _normalise_url(self, url: str) -> str:
         url = url.strip()

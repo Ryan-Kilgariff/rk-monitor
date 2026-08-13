@@ -17,7 +17,7 @@ class BatchReportService:
         ranked = sorted(
             successful,
             key=lambda item: (
-                item.result.score.overall
+                item.result.commercial_score.commercial_score
                 if item.result
                 else 999
             ),
@@ -51,8 +51,20 @@ class BatchReportService:
                 f"{result.scan_result.url}"
             )
             print(
-                f"   Score: "
-                f"{result.score.overall} / 100"
+                f"   Commercial Score: "
+                f"{result.commercial_score.commercial_score} / 100"
+            )
+            print(
+                f"   Technical: "
+                f"{result.commercial_score.technical_score}"
+            )
+            print(
+                f"   Hospitality: "
+                f"{result.commercial_score.site_quality_score}"
+            )
+            print(
+                f"   Content: "
+                f"{result.commercial_score.content_quality_score}"
             )
             print(
                 f"   Strength: "
@@ -61,6 +73,14 @@ class BatchReportService:
             print(
                 f"   Recommended: "
                 f"{result.prospect.recommended_service}"
+            )
+            print(
+                f"   Primary Problem: "
+                f"{result.prospect.primary_problem}"
+            )
+            print(
+                f"   Outreach Angle: "
+                f"{result.prospect.outreach_angle}"
             )
             print(
                 f"   High Issues: "
@@ -82,5 +102,12 @@ class BatchReportService:
                     f"  Error: "
                     f"{item.error_message}"
                 )
+        if result.prospect.supporting_reasons:
+            print(
+                "   Reasons: "
+                + " | ".join(
+                    result.prospect.supporting_reasons
+                )
+            )
         print()
         print("=" * 80)

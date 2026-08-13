@@ -117,52 +117,56 @@ class IssueService:
                     ),
                 )
             )
-        if not scan_result.has_mobile_viewport:
-            issues.append(
-                Issue(
-                    severity="HIGH",
-                    category="Mobile Experience",
-                    title="Mobile viewport not detected",
-                    evidence=(
-                        "No standard mobile viewport "
-                        "meta tag was detected."
-                    ),
-                    commercial_impact=(
-                        "The website may display poorly "
-                        "on phones, creating friction "
-                        "for mobile guests."
-                    ),
-                    recommended_action=(
-                        "Implement responsive viewport "
-                        "configuration and test the "
-                        "booking journey on mobile."
-                    ),
+        if scan_result.successful:
+            if not scan_result.has_mobile_viewport:
+                issues.append(
+                    Issue(
+                        severity="HIGH",
+                        category="Mobile Experience",
+                        title="Mobile viewport not detected",
+                        evidence=(
+                            "No standard mobile viewport "
+                            "meta tag was detected."
+                        ),
+                        commercial_impact=(
+                            "The website may display poorly "
+                            "on phones, creating friction "
+                            "for mobile guests."
+                        ),
+                        recommended_action=(
+                            "Implement responsive viewport "
+                            "configuration and test the "
+                            "booking journey on mobile."
+                        ),
+                    )
                 )
-            )
-        if not scan_result.has_google_analytics:
-            issues.append(
-                Issue(
-                    severity="LOW",
-                    category="Analytics",
-                    title="Google Analytics not detected",
-                    evidence=(
-                        "RK Monitor did not detect "
-                        "common Google Analytics or "
-                        "Google Tag Manager markers."
-                    ),
-                    commercial_impact=(
-                        "The property may have limited "
-                        "visibility into website and "
-                        "booking behaviour."
-                    ),
-                    recommended_action=(
-                        "Confirm whether analytics are "
-                        "configured and tracking useful "
-                        "conversion events."
-                    ),
+            if not scan_result.has_google_analytics:
+                issues.append(
+                    Issue(
+                        severity="LOW",
+                        category="Analytics",
+                        title="Google Analytics not detected",
+                        evidence=(
+                            "RK Monitor did not detect "
+                            "common Google Analytics or "
+                            "Google Tag Manager markers."
+                        ),
+                        commercial_impact=(
+                            "The property may have limited "
+                            "visibility into website and "
+                            "booking behaviour."
+                        ),
+                        recommended_action=(
+                            "Confirm whether analytics are "
+                            "configured and tracking useful "
+                            "conversion events."
+                        ),
+                    )
                 )
-            )
-        if scan_result.ssl_verification_failed:
+        if (
+            scan_result.ssl_verification_failed
+            and not scan_result.connection_failed
+        ):
             issues.append(
                 Issue(
                     severity="HIGH",
@@ -204,7 +208,10 @@ class IssueService:
                     ),
                 )
             )
-        if scan_result.connection_failed:
+        if (
+            scan_result.connection_failed
+            and not scan_result.ssl_verification_failed
+        ):
             issues.append(
                 Issue(
                     severity="HIGH",
@@ -221,6 +228,34 @@ class IssueService:
                     recommended_action=(
                         "Review hosting availability, "
                         "server configuration and network connectivity."
+                    ),
+                )
+            )
+        if (
+            scan_result.ssl_verification_failed
+            and scan_result.connection_failed
+        ):
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Technical Health",
+                    title=(
+                        "Secure website connection failed"
+                    ),
+                    evidence=(
+                        scan_result.ssl_error_message
+                        or (
+                            "The HTTPS connection could not "
+                            "be established."
+                        )
+                    ),
+                    commercial_impact=(
+                        "Visitors may be unable to access "
+                        "the website securely."
+                    ),
+                    recommended_action=(
+                        "Investigate the website's SSL/TLS "
+                        "configuration and hosting setup."
                     ),
                 )
             )

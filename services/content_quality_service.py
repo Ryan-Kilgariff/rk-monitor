@@ -107,7 +107,13 @@ class ContentQualityService:
                         second.content_text,
                     )
                 )
-                if similarity >= self.duplicate_threshold:
+                threshold = self.duplicate_threshold
+                if (
+                    first.page_type == "rooms"
+                    and second.page_type == "rooms"
+                ):
+                    threshold = 0.90
+                if similarity >= threshold:
                     duplicates.append(
                         DuplicatePagePair(
                             first_url=first.url,

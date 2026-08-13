@@ -1,0 +1,9 @@
+URL,Score,Strength,Recommended Service,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Top Problem,Scan Successful,Error,Commercial Score,Site Quality Score,Content Quality Score,Primary Problem,Outreach Angle,Supporting Reasons
+https://tongebarn.co.uk/,,,,,,,,,,No,"HTTPSConnectionPool(host='tongebarn.co.uk', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1081)')))",,,,,,
+https://www.thewoolly.com/,86,WEAK,RK Monitor,0,0,2,,1,Google Analytics not detected,Yes,,86,85,75,Google Analytics not detected,Booking journey,
+https://www.dunkerleys.co.uk/,80,POSSIBLE,Targeted Website Improvements,0,0,0,Eviivo,1,,Yes,,80,60,85,No major automated issue detected,Website structure and guest journey,Limited hospitality website structure
+https://www.whiteliontenterden.com/,98,WEAK,RK Monitor,0,0,1,,1,Booking provider not recognised,Yes,,98,95,100,Booking provider not recognised,Booking journey,
+https://www.georgeandheart.com/,78,POSSIBLE,Targeted Website Improvements,0,0,1,,1,Booking provider not recognised,Yes,,78,65,75,Booking provider not recognised,Booking journey,
+https://www.bowlinncharing.com/,93,WEAK,RK Monitor,0,0,1,,4,Booking provider not recognised,Yes,,93,95,85,Booking provider not recognised,Booking journey,
+https://www.sunfaversham.co.uk/,92,POSSIBLE,Targeted Website Improvements,1,1,2,,1,Offers page returned an error,Yes,,92,95,85,Offers page returned an error,Booking journey,Offers page returned an error | Broken internal link detected
+https://www.hempsteadhouse.co.uk/,78,POSSIBLE,Targeted Website Improvements,0,0,1,,2,Booking provider not recognised,Yes,,78,65,75,Booking provider not recognised,Booking journey,
