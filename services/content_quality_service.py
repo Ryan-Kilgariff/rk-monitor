@@ -36,11 +36,19 @@ class ContentQualityService:
                 and page.content_text
             )
         ]
+        utility_page_types = {
+            "contact",
+            "booking",
+            "gallery",
+            "location",
+            "reviews",
+        }
         thin_pages = [
             page.url
             for page in usable_pages
             if (
-                page.word_count
+                page.page_type not in utility_page_types
+                and page.word_count
                 < self.thin_page_threshold
             )
         ]

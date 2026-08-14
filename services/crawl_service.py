@@ -286,13 +286,6 @@ class CrawlService:
                 "ensuite",
                 "en-suite",
             ),
-            "offers": (
-                "offer",
-                "offers",
-                "package",
-                "packages",
-                "special offers",
-            ),
             "dining": (
                 "restaurant",
                 "dining",
@@ -325,13 +318,43 @@ class CrawlService:
                 "find-us",
                 "location",
             ),
+            "booking": (
+                "booking",
+                "book",
+                "reservations",
+                "reservation",
+            ),
+            "gallery": (
+                "gallery",
+                "photos",
+                "photographs",
+            ),
+            "reviews": (
+                "reviews",
+                "review",
+                "testimonials",
+            ),
+            "offers": (
+                "offer",
+                "offers",
+                "package",
+                "packages",
+                "special",
+                "specials",
+                "special offers",
+            ),
         }
         for page_type, terms in page_rules.items():
             for term in terms:
                 normalised_term = (
-                    term.replace("-", " ")
+                    term
+                    .replace("-", " ")
+                    .strip()
                 )
-                if normalised_term in joined_path:
+                if " " in normalised_term:
+                    if normalised_term in joined_path:
+                        return page_type
+                elif normalised_term in path_words:
                     return page_type
         return None
     def _extract_content_text(

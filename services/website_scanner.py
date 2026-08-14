@@ -23,6 +23,7 @@ class ScanResult:
     ssl_error_message: str | None
     dns_resolution_failed: bool
     connection_failed: bool
+    timeout_occurred: bool = False
     error_message: str | None = None
 class WebsiteScanner:
     def __init__(self, timeout: int = 10):
@@ -52,13 +53,33 @@ class WebsiteScanner:
             except SSLError as exc:
                 ssl_verification_failed = True
                 ssl_error_message = str(exc)
-                response = requests.get(
-                    url,
-                    headers=self.headers,
-                    timeout=self.timeout,
-                    allow_redirects=True,
-                    verify=False,
-                )
+                try:
+                    response = requests.get(
+                        url,
+                        headers=self.headers,
+                        timeout=self.timeout,
+                        allow_redirects=True,
+                        verify=False,
+                    )
+                except requests.exceptions.Timeout as timeout_exc:
+                    return ScanResult(
+                        url=url,
+                        status_code=None,
+                        response_time=None,
+                        page_title=None,
+                        has_https=url.startswith("https://"),
+                        has_mobile_viewport=False,
+                        has_google_analytics=False,
+                        booking_links=[],
+                        internal_links=[],
+                        successful=False,
+                        ssl_verification_failed=True,
+                        ssl_error_message=ssl_error_message,
+                        dns_resolution_failed=False,
+                        connection_failed=False,
+                        timeout_occurred=True,
+                        error_message=str(timeout_exc),
+                    )
             response_time = (
                 time.perf_counter()
                 - started
@@ -100,6 +121,27 @@ class WebsiteScanner:
                 ssl_error_message=ssl_error_message,
                 dns_resolution_failed=False,
                 connection_failed=False,
+                timeout_occurred=False,
+            )
+        except requests.exceptions.Timeout as exc:
+            error_text = str(exc)
+            return ScanResult(
+                url=url,
+                status_code=None,
+                response_time=None,
+                page_title=None,
+                has_https=url.startswith("https://"),
+                has_mobile_viewport=False,
+                has_google_analytics=False,
+                booking_links=[],
+                internal_links=[],
+                successful=False,
+                ssl_verification_failed=False,
+                ssl_error_message=None,
+                dns_resolution_failed=False,
+                connection_failed=False,
+                timeout_occurred=True,
+                error_message=error_text,
             )
         except ConnectionError as exc:
             error_text = str(exc)
@@ -146,6 +188,7 @@ class WebsiteScanner:
                 ),
                 dns_resolution_failed=dns_resolution_failed,
                 connection_failed=connection_failed,
+                timeout_occurred=False,
                 error_message=error_text,
             )
         except requests.RequestException as exc:
@@ -192,6 +235,7 @@ class WebsiteScanner:
                 connection_failed=(
                     not dns_resolution_failed
                 ),
+                timeout_occurred=False,
                 error_message=error_text,
             )
     def _normalise_url(self, url: str) -> str:

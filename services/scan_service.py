@@ -21,6 +21,7 @@ from services.commercial_scoring_service import (
 )
 from services.domain_identity_service import (
     DomainIdentityService,
+    DomainIdentityResult,
 )
 @dataclass
 class FullScanResult:
@@ -68,6 +69,7 @@ class ScanService:
         booking_links = []
         booking_provider = None
         link_results = []
+        domain_identity = None
         # --------------------------------------------------
         # 3. WEBSITE CRAWLING
         # --------------------------------------------------
@@ -117,6 +119,12 @@ class ScanService:
                 )
             domain_identity_service = (
                 DomainIdentityService()
+            )
+            domain_identity = (
+                domain_identity_service.analyse(
+                    scan_result.page_title,
+                    homepage_content_text,
+                )
             )
             domain_identity = (
                 domain_identity_service.analyse(

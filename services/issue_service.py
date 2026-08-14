@@ -254,6 +254,26 @@ class IssueService:
                     ),
                 )
             )
+        if scan_result.timeout_occurred:
+            issues.append(
+                Issue(
+                    severity="MEDIUM",
+                    category="Technical Health",
+                    title="Homepage request timed out",
+                    evidence=(
+                        scan_result.error_message
+                        or "The homepage request exceeded the timeout."
+                    ),
+                    commercial_impact=(
+                        "Guests may experience delays or difficulty "
+                        "reaching the website when the server responds slowly."
+                    ),
+                    recommended_action=(
+                        "Review server response times, hosting performance "
+                        "and application load."
+                    ),
+                )
+            )
         if (
             scan_result.connection_failed
             and not scan_result.ssl_verification_failed
@@ -317,6 +337,7 @@ class IssueService:
         if (
             scan_result.dns_resolution_failed
             or scan_result.connection_failed
+            or scan_result.timeout_occurred
         ):
             return []
         room_pages = [
