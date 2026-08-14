@@ -93,6 +93,7 @@ class ProspectService:
                 True,
                 commercial,
                 high_count,
+                medium_count,
             )
             manual_review_needed = (
                 review_priority in (
@@ -124,6 +125,7 @@ class ProspectService:
                 False,
                 commercial,
                 high_count,
+                medium_count,
             )
             manual_review_needed = (
                 review_priority in (
@@ -152,6 +154,7 @@ class ProspectService:
                 False,
                 commercial,
                 high_count,
+                medium_count,
             )
             manual_review_needed = (
                 review_priority in (
@@ -184,6 +187,7 @@ class ProspectService:
                 False,
                 commercial,
                 high_count,
+                medium_count,
             )
             manual_review_needed = (
                 review_priority in (
@@ -211,6 +215,7 @@ class ProspectService:
             False,
             commercial,
             high_count,
+            medium_count,
         )
         manual_review_needed = (
             review_priority in (
@@ -381,6 +386,7 @@ class ProspectService:
         critical_technical_issue: bool,
         commercial_score: int,
         high_issue_count: int,
+        medium_issue_count: int,
     ) -> str:
         if critical_technical_issue:
             return "HIGH"
@@ -392,6 +398,11 @@ class ProspectService:
         if (
             strength == "POSSIBLE"
             and high_issue_count >= 1
+        ):
+            return "MEDIUM"
+        if (
+            strength == "POSSIBLE"
+            and medium_issue_count >= 2
         ):
             return "MEDIUM"
         if (

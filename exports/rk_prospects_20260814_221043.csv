@@ -1,0 +1,6 @@
+Priority,Manual Review,URL,Strength,Recommended Service,Commercial Score,Technical Score,Site Quality Score,Content Quality Score,Primary Problem,Outreach Angle,Supporting Reasons,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Scan Successful,Error
+4,No,https://www.thefalstafframsgate.com/,WEAK,RK Monitor,94,99,90,95,No major automated issue detected,General website review,,0,0,1,Eviivo,1,Yes,
+3,Yes,https://www.mollandhouse.co.uk/,POSSIBLE,Targeted Website Improvements,79,89,70,80,No room booking route detected,Booking journey,No room booking route detected,2,0,1,,0,Yes,
+1,Yes,https://www.fourseasonsbookings.co.uk/,STRONG,Website Redesign,78,85,55,100,No room booking route detected,Booking journey,No room booking route detected | Multiple broken internal links detected | Limited hospitality website structure,3,0,0,,0,Yes,
+3,Yes,https://www.newinn-sandwich.co.uk/,POSSIBLE,Targeted Website Improvements,78,93,65,80,Multiple gallery pages returned errors,Website reliability,Multiple gallery pages returned errors,2,0,2,,1,Yes,
+4,No,https://thecornerbroadstairs.co.uk/,WEAK,RK Monitor,99,97,100,100,Slow homepage response,Website reliability,Slow homepage response,0,1,1,,1,Yes,

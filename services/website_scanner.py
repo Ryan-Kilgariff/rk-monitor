@@ -34,6 +34,48 @@ class WebsiteScanner:
                 "(compatible; RKMonitor/0.1; Website Monitoring)"
             )
         }
+    def _request_with_retry(
+        self,
+        url: str,
+        verify: bool,
+    ):
+        transient_status_codes = {
+            403,
+            408,
+            429,
+            500,
+            502,
+            503,
+            504,
+        }
+        try:
+            response = requests.get(
+                url,
+                headers=self.headers,
+                timeout=self.timeout,
+                allow_redirects=True,
+                verify=verify,
+            )
+        except requests.exceptions.Timeout:
+            response = requests.get(
+                url,
+                headers=self.headers,
+                timeout=self.timeout,
+                allow_redirects=True,
+                verify=verify,
+            )
+        if (
+            response.status_code
+            in transient_status_codes
+        ):
+            response = requests.get(
+                url,
+                headers=self.headers,
+                timeout=self.timeout,
+                allow_redirects=True,
+                verify=verify,
+            )
+        return response
     def scan(self, url: str) -> ScanResult:
         url = self._normalise_url(url)
         ssl_verification_failed = False
@@ -43,22 +85,16 @@ class WebsiteScanner:
         try:
             started = time.perf_counter()
             try:
-                response = requests.get(
+                response = self._request_with_retry(
                     url,
-                    headers=self.headers,
-                    timeout=self.timeout,
-                    allow_redirects=True,
                     verify=True,
                 )
             except SSLError as exc:
                 ssl_verification_failed = True
                 ssl_error_message = str(exc)
                 try:
-                    response = requests.get(
+                    response = self._request_with_retry(
                         url,
-                        headers=self.headers,
-                        timeout=self.timeout,
-                        allow_redirects=True,
                         verify=False,
                     )
                 except requests.exceptions.Timeout as timeout_exc:
