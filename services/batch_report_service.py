@@ -14,13 +14,24 @@ class BatchReportService:
         failed = (
             batch.failed_items
         )
+        def ranking_key(item):
+            result = item.result
+            if result is None:
+                return (3, 999)
+            if (
+                not result.scan_result.successful
+                and result.prospect.strength == "STRONG"
+            ):
+                return (0, 0)
+            if not result.scan_result.successful:
+                return (2, 999)
+            return (
+                1,
+                result.commercial_score.commercial_score,
+            )
         ranked = sorted(
             successful,
-            key=lambda item: (
-                item.result.commercial_score.commercial_score
-                if item.result
-                else 999
-            ),
+            key=ranking_key,
         )
         print()
         print(
@@ -50,25 +61,48 @@ class BatchReportService:
                 f"{index}. "
                 f"{result.scan_result.url}"
             )
-            print(
-                f"   Commercial Score: "
-                f"{result.commercial_score.commercial_score} / 100"
-            )
-            print(
-                f"   Technical: "
-                f"{result.commercial_score.technical_score}"
-            )
-            print(
-                f"   Hospitality: "
-                f"{result.commercial_score.site_quality_score}"
-            )
-            print(
-                f"   Content: "
-                f"{result.commercial_score.content_quality_score}"
-            )
+            if not result.scan_result.successful:
+                print(
+                    "   Commercial Score: N/A"
+                )
+                print(
+                    "   Technical: "
+                    f"{result.score.overall}"
+                )
+                print(
+                    "   Hospitality: N/A"
+                )
+                print(
+                    "   Content: N/A"
+                )
+            else:
+                print(
+                    "   Commercial Score: "
+                    f"{result.commercial_score.commercial_score} / 100"
+                )
+                print(
+                    "   Technical: "
+                    f"{result.commercial_score.technical_score}"
+                )
+                print(
+                    "   Hospitality: "
+                    f"{result.commercial_score.site_quality_score}"
+                )
+                print(
+                    "   Content: "
+                    f"{result.commercial_score.content_quality_score}"
+                )
             print(
                 f"   Strength: "
                 f"{result.prospect.strength}"
+            )
+            print(
+                f"   Review Priority: "
+                f"{result.prospect.review_priority}"
+            )
+            print(
+                f"   Manual Review: "
+                f"{'Yes' if result.prospect.manual_review_needed else 'No'}"
             )
             print(
                 f"   Recommended: "
@@ -90,6 +124,13 @@ class BatchReportService:
                 f"   Medium Issues: "
                 f"{result.score.medium_issues}"
             )
+            if result.prospect.supporting_reasons:
+                print(
+                    "   Reasons: "
+                    + " | ".join(
+                        result.prospect.supporting_reasons
+                    )
+                )
         if failed:
             print()
             print("FAILED SCANS")
@@ -102,12 +143,5 @@ class BatchReportService:
                     f"  Error: "
                     f"{item.error_message}"
                 )
-        if result.prospect.supporting_reasons:
-            print(
-                "   Reasons: "
-                + " | ".join(
-                    result.prospect.supporting_reasons
-                )
-            )
         print()
         print("=" * 80)

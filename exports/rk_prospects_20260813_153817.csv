@@ -1,0 +1,9 @@
+URL,Score,Strength,Recommended Service,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Top Problem,Scan Successful,Error,Commercial Score,Site Quality Score,Content Quality Score,Primary Problem,Outreach Angle,Supporting Reasons
+https://tongebarn.co.uk/,68,STRONG,Website Recovery / Redesign,1,0,0,,0,Secure website connection failed,Yes,,68,25,100,Secure website connection failed,Website reliability,Secure website connection failed
+https://www.thewoolly.com/,86,WEAK,RK Monitor,0,0,2,,1,Google Analytics not detected,Yes,,86,85,75,No major automated issue detected,General website review,
+https://www.dunkerleys.co.uk/,75,POSSIBLE,Targeted Website Improvements,0,0,0,Eviivo,1,,Yes,,75,60,70,No major automated issue detected,Website structure and guest journey,Limited hospitality website structure
+https://www.whiteliontenterden.com/,89,WEAK,RK Monitor,0,0,1,,1,Booking provider not recognised,Yes,,89,95,70,No major automated issue detected,General website review,
+https://www.georgeandheart.com/,69,GOOD,Website Improvement / Redesign,0,0,1,,1,Booking provider not recognised,Yes,,69,65,45,No major automated issue detected,Website content and information quality,Weak or repetitive website content
+https://www.sunfaversham.co.uk/,88,POSSIBLE,Targeted Website Improvements,1,1,2,,1,Offers page returned an error,Yes,,88,95,70,Offers page returned an error,Website reliability,Offers page returned an error | Broken internal link detected
+https://www.bowlinncharing.com/,84,WEAK,RK Monitor,0,0,1,,4,Booking provider not recognised,Yes,,84,95,55,No major automated issue detected,Website content and information quality,Weak or repetitive website content
+https://www.hempsteadhouse.co.uk/,78,POSSIBLE,Targeted Website Improvements,0,0,1,,2,Booking provider not recognised,Yes,,78,65,75,No major automated issue detected,General website review,

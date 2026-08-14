@@ -404,6 +404,7 @@ class CrawlService:
     ) -> list[CrawledPage]:
         pages = []
         for url in urls:
+            page_type = "general"
             try:
                 response = requests.get(
                     url,

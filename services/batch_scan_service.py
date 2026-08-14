@@ -74,6 +74,11 @@ class BatchScanService:
                     f"[{completed}/{total}] "
                     f"{status} - {item.url}"
                 )
+                if not item.successful:
+                    print(
+                        f"      Error: "
+                        f"{item.error_message}"
+                    )
         return BatchScanResult(
             items=items
         )

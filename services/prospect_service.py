@@ -12,6 +12,8 @@ class ProspectResult:
     primary_problem: str
     outreach_angle: str
     supporting_reasons: list[str]
+    review_priority: str
+    manual_review_needed: bool
 class ProspectService:
     def qualify(
         self,
@@ -27,6 +29,9 @@ class ProspectService:
             for issue in issues
             if issue.severity == "HIGH"
         ]
+        high_count = len(
+            high_issues
+        )
         medium_issues = [
             issue
             for issue in issues
@@ -51,8 +56,12 @@ class ProspectService:
             issue.title in (
                 "Website domain could not be resolved",
                 "Website connection failed",
-                "Homepage returned an error",
                 "Secure website connection failed",
+                "Homepage returned an error",
+                (
+                    "Website content appears "
+                    "unrelated to the hospitality business"
+                ),
             )
             for issue in issues
         )
@@ -79,6 +88,18 @@ class ProspectService:
                     critical_reasons.append(
                         issue.title
                     )
+            review_priority = self._get_review_priority(
+                "STRONG",
+                True,
+                commercial,
+                high_count,
+            )
+            manual_review_needed = (
+                review_priority in (
+                    "HIGH",
+                    "MEDIUM",
+                )
+            )
             return ProspectResult(
                 strength="STRONG",
                 recommended_service=(
@@ -91,11 +112,25 @@ class ProspectService:
                 primary_problem=primary_problem,
                 outreach_angle=outreach_angle,
                 supporting_reasons=critical_reasons[:3],
+                review_priority=review_priority,
+                manual_review_needed=manual_review_needed,
             )
         if (
             commercial <= 55
             or high_family_count >= 2
         ):
+            review_priority = self._get_review_priority(
+                "STRONG",
+                False,
+                commercial,
+                high_count,
+            )
+            manual_review_needed = (
+                review_priority in (
+                    "HIGH",
+                    "MEDIUM",
+                )
+            )
             return ProspectResult(
                 strength="STRONG",
                 recommended_service=(
@@ -108,8 +143,22 @@ class ProspectService:
                 primary_problem=primary_problem,
                 outreach_angle=outreach_angle,
                 supporting_reasons=supporting_reasons,
+                review_priority=review_priority,
+                manual_review_needed=manual_review_needed,
             )
         if commercial <= 70:
+            review_priority = self._get_review_priority(
+                "GOOD",
+                False,
+                commercial,
+                high_count,
+            )
+            manual_review_needed = (
+                review_priority in (
+                    "HIGH",
+                    "MEDIUM",
+                )
+            )
             return ProspectResult(
                 strength="GOOD",
                 recommended_service=(
@@ -122,12 +171,26 @@ class ProspectService:
                 primary_problem=primary_problem,
                 outreach_angle=outreach_angle,
                 supporting_reasons=supporting_reasons,
+                review_priority=review_priority,
+                manual_review_needed=manual_review_needed,
             )
         if (
             commercial <= 82
             or high_family_count == 1
             or medium_count >= 2
         ):
+            review_priority = self._get_review_priority(
+                "POSSIBLE",
+                False,
+                commercial,
+                high_count,
+            )
+            manual_review_needed = (
+                review_priority in (
+                    "HIGH",
+                    "MEDIUM",
+                )
+            )
             return ProspectResult(
                 strength="POSSIBLE",
                 recommended_service=(
@@ -140,7 +203,21 @@ class ProspectService:
                 primary_problem=primary_problem,
                 outreach_angle=outreach_angle,
                 supporting_reasons=supporting_reasons,
+                review_priority=review_priority,
+                manual_review_needed=manual_review_needed,
             )
+        review_priority = self._get_review_priority(
+            "WEAK",
+            False,
+            commercial,
+            high_count,
+        )
+        manual_review_needed = (
+            review_priority in (
+                "HIGH",
+                "MEDIUM",
+            )
+        )
         return ProspectResult(
             strength="WEAK",
             recommended_service="RK Monitor",
@@ -151,6 +228,8 @@ class ProspectService:
             primary_problem=primary_problem,
             outreach_angle=outreach_angle,
             supporting_reasons=supporting_reasons,
+            review_priority=review_priority,
+            manual_review_needed=manual_review_needed,
         )
     def _get_primary_problem(
         self,
@@ -288,3 +367,28 @@ class ProspectService:
             " ",
             "_",
         )
+    def _get_review_priority(
+        self,
+        strength: str,
+        critical_technical_issue: bool,
+        commercial_score: int,
+        high_issue_count: int,
+    ) -> str:
+        if critical_technical_issue:
+            return "HIGH"
+        if strength in (
+            "STRONG",
+            "GOOD",
+        ):
+            return "HIGH"
+        if (
+            strength == "POSSIBLE"
+            and high_issue_count >= 1
+        ):
+            return "MEDIUM"
+        if (
+            strength == "POSSIBLE"
+            and commercial_score <= 82
+        ):
+            return "MEDIUM"
+        return "LOW"

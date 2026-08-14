@@ -19,6 +19,9 @@ from services.commercial_scoring_service import (
     CommercialScoringService,
     CommercialScoreResult,
 )
+from services.domain_identity_service import (
+    DomainIdentityService,
+)
 @dataclass
 class FullScanResult:
     scan_result: ScanResult
@@ -35,6 +38,7 @@ class FullScanResult:
     content_quality: ContentQualityResult
     general_pages: list[CrawledPage]
     commercial_score: CommercialScoreResult
+    domain_identity: DomainIdentityResult | None
 class ScanService:
     def run(
         self,
@@ -106,6 +110,20 @@ class ScanService:
                     general_urls
                 )
             )
+            homepage_content_text = ""
+            if general_pages:
+                homepage_content_text = (
+                    general_pages[0].content_text
+                )
+            domain_identity_service = (
+                DomainIdentityService()
+            )
+            domain_identity = (
+                domain_identity_service.analyse(
+                    scan_result.page_title,
+                    homepage_content_text,
+                )
+            )
             # ----------------------------------------------
             # BOOKING DETECTION
             # ----------------------------------------------
@@ -167,6 +185,7 @@ class ScanService:
             booking_provider=booking_provider,
             all_booking_links=booking_links,
             link_results=link_results,
+            domain_identity=domain_identity
         )
         # --------------------------------------------------
         # 7. TECHNICAL SCORE
@@ -246,4 +265,5 @@ class ScanService:
             prospect=prospect,
             scan_id=scan_id,
             comparison=comparison,
+            domain_identity=domain_identity
         )

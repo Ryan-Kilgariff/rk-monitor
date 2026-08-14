@@ -173,14 +173,33 @@ class ReportService:
         print()
         print("COMMERCIAL WEBSITE SCORE")
         print()
-        if not result.scan_result.successful:
-            print(
-                "COMMERCIAL SCORE:      N/A"
+        limited_analysis = (
+            not result.scan_result.successful
+            or (
+                result.domain_identity is not None
+                and result.domain_identity.mismatch_detected
             )
-            print(
-                "Reason: Full website analysis "
-                "could not be completed."
-            )
+        )
+        if limited_analysis:
+            if (
+                result.domain_identity is not None
+                and result.domain_identity.mismatch_detected
+            ):
+                print(
+                    "COMMERCIAL SCORE:      N/A"
+                )
+                print(
+                    "Reason: Website identity mismatch "
+                    "prevented a valid hospitality analysis."
+                )
+            else:
+                print(
+                    "COMMERCIAL SCORE:      N/A"
+                )
+                print(
+                    "Reason: Full website analysis "
+                    "could not be completed."
+                )
         else:
             commercial = result.commercial_score
             print(
@@ -201,6 +220,7 @@ class ReportService:
                 f"{commercial.commercial_score} / 100"
             )
             print()
+        print()
         print()
         print("## PROSPECT QUALIFICATION")
         print()
@@ -297,13 +317,24 @@ class ReportService:
         print()
         print("## SITE QUALITY")
         print()
-        if not result.scan_result.successful:
-            print(
-                "Not available - website content "
-                "could not be retrieved."
-            )
+        if limited_analysis:
+            if (
+                result.domain_identity is not None
+                and result.domain_identity.mismatch_detected
+            ):
+                print(
+                    "Not available - returned website "
+                    "content appears unrelated to the "
+                    "hospitality business."
+                )
+            else:
+                print(
+                    "Not available - website content "
+                    "could not be retrieved."
+                )
         else:
             quality = result.site_quality
+
             print(
                 f"Important Page Types: "
                 f"{quality.important_page_count}"
@@ -336,6 +367,7 @@ class ReportService:
             print(
                 "ADDITIONAL HOSPITALITY FEATURES"
             )
+
             print(
                 f"Dining: "
                 f"{'Yes' if quality.has_dining else 'No'}"
@@ -356,11 +388,21 @@ class ReportService:
         print()
         print("## CONTENT QUALITY")
         print()
-        if not result.scan_result.successful:
-            print(
-                "Not available - no pages "
-                "could be analysed."
-            )
+        if limited_analysis:
+            if (
+                result.domain_identity is not None
+                and result.domain_identity.mismatch_detected
+            ):
+                print(
+                    "Not available - returned website "
+                    "content appears unrelated to the "
+                    "hospitality business."
+                )
+            else:
+                print(
+                    "Not available - no pages "
+                    "could be analysed."
+                )
         else:
             content = result.content_quality
             print(
@@ -402,7 +444,8 @@ class ReportService:
                         pair.overlap * 100
                     )
                     print(
-                        f" - {overlap_percent}% content overlap"
+                        f" - {overlap_percent}% "
+                        f"content overlap"
                     )
                     print(
                         f"   {pair.first_url}"
@@ -411,9 +454,9 @@ class ReportService:
                         f"   {pair.second_url}"
                     )
         if (
-                result.scan_result.successful
-                and result.general_pages
-            ):
+            not limited_analysis
+            and result.general_pages
+        ):
             print()
             print("DISCOVERED PAGES")
             for page in result.general_pages:

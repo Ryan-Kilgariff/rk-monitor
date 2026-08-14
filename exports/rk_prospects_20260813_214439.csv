@@ -1,0 +1,9 @@
+Priority,URL,Strength,Recommended Service,Commercial Score,Technical Score,Site Quality Score,Content Quality Score,Primary Problem,Outreach Angle,Supporting Reasons,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Scan Successful,Error
+1,https://tongebarn.co.uk/,STRONG,Website Recovery / Redesign,,,,,Secure website connection failed,Website reliability,Secure website connection failed,1,0,0,,0,Limited,"HTTPSConnectionPool(host='tongebarn.co.uk', port=443): Max retries exceeded with url: / (Caused by SSLError(SSLError(1, '[SSL: SSLV3_ALERT_HANDSHAKE_FAILURE] sslv3 alert handshake failure (_ssl.c:1081)')))"
+4,https://www.thewoolly.com/,WEAK,RK Monitor,86,,85,75,No major automated issue detected,General website review,,0,0,2,,1,Yes,
+3,https://www.dunkerleys.co.uk/,POSSIBLE,Targeted Website Improvements,75,,60,70,No major automated issue detected,Website structure and guest journey,Limited hospitality website structure,0,0,0,Eviivo,1,Yes,
+4,https://www.whiteliontenterden.com/,WEAK,RK Monitor,89,,95,70,No major automated issue detected,General website review,,0,0,1,,1,Yes,
+2,https://www.georgeandheart.com/,GOOD,Website Improvement / Redesign,69,,65,45,No major automated issue detected,Website content and information quality,Weak or repetitive website content,0,0,1,,1,Yes,
+4,https://www.bowlinncharing.com/,WEAK,RK Monitor,84,,95,55,No major automated issue detected,Website content and information quality,Weak or repetitive website content,0,0,1,,4,Yes,
+3,https://www.sunfaversham.co.uk/,POSSIBLE,Targeted Website Improvements,88,,95,70,Offers page returned an error,Website reliability,Offers page returned an error | Broken internal link detected,1,1,2,,1,Yes,
+3,https://www.hempsteadhouse.co.uk/,POSSIBLE,Targeted Website Improvements,78,,65,75,No major automated issue detected,General website review,,0,0,1,,2,Yes,

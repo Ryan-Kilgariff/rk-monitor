@@ -18,32 +18,78 @@ class IssueService:
         booking_provider: str | None,
         all_booking_links: list[str],
         link_results: list[LinkCheckResult],
+        domain_identity=None,
     ) -> list[Issue]:
         issues = []
+        content_mismatch = (
+            domain_identity is not None
+            and domain_identity.mismatch_detected
+        )
+        # ----------------------------------------------
+        # DOMAIN / WEBSITE IDENTITY
+        # ----------------------------------------------
+        if content_mismatch:
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Technical Health",
+                    title=(
+                        "Website content appears "
+                        "unrelated to the hospitality business"
+                    ),
+                    evidence=(
+                        " | ".join(
+                            domain_identity.evidence
+                        )
+                    ),
+                    commercial_impact=(
+                        "Guests may be reaching unrelated "
+                        "content instead of the property's "
+                        "website, which can cause confusion "
+                        "and lost bookings."
+                    ),
+                    recommended_action=(
+                        "Review domain routing, hosting, "
+                        "redirects and virtual-host "
+                        "configuration."
+                    ),
+                )
+            )
+        # ----------------------------------------------
+        # TECHNICAL HEALTH
+        # ----------------------------------------------
         issues.extend(
             self._analyse_technical_health(
                 scan_result
             )
         )
-        issues.extend(
-            self._analyse_booking_journey(
-                scan_result,
-                crawled_pages,
-                booking_provider,
-                all_booking_links,
+        # ----------------------------------------------
+        # HOSPITALITY-SPECIFIC ANALYSIS
+        # Only run when the returned website appears
+        # to belong to the hospitality business.
+        # ----------------------------------------------
+        if not content_mismatch:
+            issues.extend(
+                self._analyse_booking_journey(
+                    scan_result,
+                    crawled_pages,
+                    booking_provider,
+                    all_booking_links,
+                )
             )
-        )
-        issues.extend(
-            self._analyse_hospitality_pages(
-                crawled_pages
+            issues.extend(
+                self._analyse_hospitality_pages(
+                    crawled_pages
+                )
             )
-        )
-        issues.extend(
-            self._analyse_link_health(
-                link_results
+            issues.extend(
+                self._analyse_link_health(
+                    link_results
+                )
             )
+        return self._sort_issues(
+            issues
         )
-        return self._sort_issues(issues)
     def _analyse_technical_health(
         self,
         scan_result: ScanResult,

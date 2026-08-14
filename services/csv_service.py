@@ -58,24 +58,25 @@ class CsvService:
             exist_ok=True,
         )
         headings = [
+            "Priority",
+            "Manual Review",
             "URL",
-            "Score",
             "Strength",
             "Recommended Service",
-            "High Issues",
-            "Medium Issues",
-            "Low Issues",
-            "Booking Provider",
-            "Booking Links",
-            "Top Problem",
-            "Scan Successful",
-            "Error",
             "Commercial Score",
+            "Technical Score",
             "Site Quality Score",
             "Content Quality Score",
             "Primary Problem",
             "Outreach Angle",
             "Supporting Reasons",
+            "High Issues",
+            "Medium Issues",
+            "Low Issues",
+            "Booking Provider",
+            "Booking Links",
+            "Scan Successful",
+            "Error",
         ]
         with path.open(
             "w",
@@ -98,13 +99,41 @@ class CsvService:
                         top_problem = (
                             result.issues[0].title
                         )
+                    if not result.scan_result.successful:
+                        commercial_score = ""
+                        hospitality_score = ""
+                        content_score = ""
+                    else:
+                        commercial_score = (
+                            result.commercial_score
+                            .commercial_score
+                        )
+                        hospitality_score = (
+                            result.commercial_score
+                            .site_quality_score
+                        )
+                        content_score = (
+                            result.commercial_score
+                            .content_quality_score
+                        )
+                    if result.prospect.strength == "STRONG":
+                        priority = 1
+                    elif result.prospect.strength == "GOOD":
+                        priority = 2
+                    elif result.prospect.strength == "POSSIBLE":
+                        priority = 3
+                    else:
+                        priority = 4
                     writer.writerow(
                         {
+                            "Priority": priority,
+                            "Manual Review": (
+                                "Yes"
+                                if result.prospect.manual_review_needed
+                                else "No"
+                            ),
                             "URL": (
                                 result.scan_result.url
-                            ),
-                            "Score": (
-                                result.commercial_score.commercial_score
                             ),
                             "Strength": (
                                 result.prospect.strength
@@ -131,24 +160,23 @@ class CsvService:
                                     result.booking_links
                                 )
                             ),
-                            "Top Problem": (
-                                top_problem
-                            ),
                             "Scan Successful": (
                                 "Yes"
+                                if result.scan_result.successful
+                                else "Limited"
                             ),
-                            "Error": "",
+                            "Error": (
+                                result.scan_result.error_message
+                                or ""
+                            ),
                             "Commercial Score": (
-                                result.commercial_score
-                                .commercial_score
+                                commercial_score
                             ),
                             "Site Quality Score": (
-                                result.site_quality
-                                .quality_score
+                                hospitality_score
                             ),
                             "Content Quality Score": (
-                                result.content_quality
-                                .content_depth_score
+                                content_score
                             ),
                             "Primary Problem": (
                                 result.prospect
@@ -169,8 +197,9 @@ class CsvService:
                 else:
                     writer.writerow(
                         {
+                            "Priority": "",
+                            "Manual Review": "",
                             "URL": item.url,
-                            "Score": "",
                             "Strength": "",
                             "Recommended Service": "",
                             "High Issues": "",
@@ -178,11 +207,16 @@ class CsvService:
                             "Low Issues": "",
                             "Booking Provider": "",
                             "Booking Links": "",
-                            "Top Problem": "",
                             "Scan Successful": "No",
                             "Error": (
                                 item.error_message
                                 or ""
                             ),
+                            "Commercial Score": "",
+                            "Site Quality Score": "",
+                            "Content Quality Score": "",
+                            "Primary Problem": "",
+                            "Outreach Angle": "",
+                            "Supporting Reasons": "",
                         }
                     )
