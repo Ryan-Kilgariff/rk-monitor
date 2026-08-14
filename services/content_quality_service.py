@@ -28,12 +28,19 @@ class ContentQualityService:
         self,
         pages: list[CrawledPage],
     ) -> ContentQualityResult:
+        excluded_content_types = {
+            "booking",
+            "gallery",
+            "reviews",
+        }
         usable_pages = [
             page
             for page in pages
             if (
                 page.successful
                 and page.content_text
+                and page.page_type
+                not in excluded_content_types
             )
         ]
         utility_page_types = {
@@ -68,6 +75,11 @@ class ContentQualityService:
         else:
             average_word_count = 0
         score = 100
+        if len(usable_pages) < 3:
+            score = min(
+                score,
+                80,
+            )
         if len(thin_pages) >= 3:
             score -= 25
         elif len(thin_pages) == 2:
@@ -148,15 +160,14 @@ class ContentQualityService:
         shared_words = (
             first_set & second_set
         )
-        smaller_page_size = min(
-            len(first_set),
-            len(second_set),
+        combined_words = (
+            first_set | second_set
         )
-        if smaller_page_size == 0:
+        if not combined_words:
             return 0.0
         return (
             len(shared_words)
-            / smaller_page_size
+            / len(combined_words)
         )
     def _normalise_words(
         self,

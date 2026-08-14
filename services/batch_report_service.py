@@ -61,12 +61,23 @@ class BatchReportService:
                 f"{index}. "
                 f"{result.scan_result.url}"
             )
-            if not result.scan_result.successful:
+            limited_analysis = (
+                not result.scan_result.successful
+                or (
+                    result.scan_result.status_code is not None
+                    and result.scan_result.status_code >= 400
+                )
+                or (
+                    result.domain_identity is not None
+                    and result.domain_identity.mismatch_detected
+                )
+            )
+            if limited_analysis:
                 print(
                     "   Commercial Score: N/A"
                 )
                 print(
-                    "   Technical: "
+                    f"   Technical: "
                     f"{result.score.overall}"
                 )
                 print(
@@ -75,21 +86,22 @@ class BatchReportService:
                 print(
                     "   Content: N/A"
                 )
+
             else:
                 print(
-                    "   Commercial Score: "
+                    f"   Commercial Score: "
                     f"{result.commercial_score.commercial_score} / 100"
                 )
                 print(
-                    "   Technical: "
+                    f"   Technical: "
                     f"{result.commercial_score.technical_score}"
                 )
                 print(
-                    "   Hospitality: "
+                    f"   Hospitality: "
                     f"{result.commercial_score.site_quality_score}"
                 )
                 print(
-                    "   Content: "
+                    f"   Content: "
                     f"{result.commercial_score.content_quality_score}"
                 )
             print(

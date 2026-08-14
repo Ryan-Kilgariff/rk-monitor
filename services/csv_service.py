@@ -94,27 +94,26 @@ class CsvService:
                     and item.result
                 ):
                     result = item.result
-                    top_problem = ""
-                    if result.issues:
-                        top_problem = (
-                            result.issues[0].title
+                    limited_analysis = (
+                        not result.scan_result.successful
+                        or (
+                            result.domain_identity is not None
+                            and result.domain_identity.mismatch_detected
                         )
-                    if not result.scan_result.successful:
+                    )
+                    if limited_analysis:
                         commercial_score = ""
                         hospitality_score = ""
                         content_score = ""
                     else:
                         commercial_score = (
-                            result.commercial_score
-                            .commercial_score
+                            result.commercial_score.commercial_score
                         )
                         hospitality_score = (
-                            result.commercial_score
-                            .site_quality_score
+                            result.commercial_score.site_quality_score
                         )
                         content_score = (
-                            result.commercial_score
-                            .content_quality_score
+                            result.commercial_score.content_quality_score
                         )
                     if result.prospect.strength == "STRONG":
                         priority = 1
@@ -161,9 +160,9 @@ class CsvService:
                                 )
                             ),
                             "Scan Successful": (
-                                "Yes"
-                                if result.scan_result.successful
-                                else "Limited"
+                                "Limited"
+                                if limited_analysis
+                                else "Yes"
                             ),
                             "Error": (
                                 result.scan_result.error_message
@@ -171,6 +170,9 @@ class CsvService:
                             ),
                             "Commercial Score": (
                                 commercial_score
+                            ),
+                            "Technical Score": (
+                                result.score.overall
                             ),
                             "Site Quality Score": (
                                 hospitality_score
@@ -218,5 +220,6 @@ class CsvService:
                             "Primary Problem": "",
                             "Outreach Angle": "",
                             "Supporting Reasons": "",
+                            "Technical Score": "",
                         }
                     )

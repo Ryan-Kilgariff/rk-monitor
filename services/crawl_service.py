@@ -79,14 +79,19 @@ class CrawlService:
     ) -> list[tuple[str, str]]:
         important_pages = []
         for url in links:
+            if not self._is_page_url(url):
+                continue
             parsed = urlparse(url)
             path = parsed.path.lower().strip("/")
             if not path:
                 continue
             path_words = (
-                path.replace("-", " ")
-                    .replace("_", " ")
-                    .split()
+                path
+                .replace("-", " ")
+                .replace("_", " ")
+                .replace("/", " ")
+                .replace(".", " ")
+                .split()
             )
             page_type = self._classify_page(
                 path,
@@ -285,6 +290,8 @@ class CrawlService:
                 "deluxe",
                 "ensuite",
                 "en-suite",
+                "hotelrooms",
+                "hotel rooms",
             ),
             "dining": (
                 "restaurant",
@@ -293,6 +300,8 @@ class CrawlService:
                 "dine",
                 "bar",
                 "food",
+                "kitchen",
+                "the kitchen",
             ),
             "events": (
                 "wedding",
@@ -357,6 +366,33 @@ class CrawlService:
                 elif normalised_term in path_words:
                     return page_type
         return None
+    def _is_page_url(
+        self,
+        url: str,
+    ) -> bool:
+        parsed = urlparse(url)
+        path = parsed.path.lower()
+        excluded_extensions = (
+            ".jpg",
+            ".jpeg",
+            ".png",
+            ".gif",
+            ".webp",
+            ".svg",
+            ".ico",
+            ".pdf",
+            ".css",
+            ".js",
+            ".xml",
+            ".zip",
+            ".mp4",
+            ".webm",
+            ".mp3",
+            ".wav",
+        )
+        return not path.endswith(
+            excluded_extensions
+        )
     def _extract_content_text(
         self,
         soup: BeautifulSoup,
@@ -400,6 +436,9 @@ class CrawlService:
             "wp-admin",
             "feed",
             "sitemap",
+            "cart",
+            "checkout",
+            "basket",
             "mailto:",
             "tel:",
         )
@@ -408,16 +447,30 @@ class CrawlService:
             url = url.strip()
             if not url:
                 continue
-            url_lower = url.lower()
+            if not self._is_page_url(url):
+                continue
+            parsed = urlparse(url)
+            clean_url = parsed._replace(
+                query="",
+                fragment="",
+            ).geturl()
+            if (
+                parsed.path
+                and parsed.path != "/"
+            ):
+                clean_url = clean_url.rstrip("/")
+            url_lower = clean_url.lower()
             if any(
                 term in url_lower
                 for term in excluded_terms
             ):
                 continue
-            if url in seen:
+            if clean_url in seen:
                 continue
-            seen.add(url)
-            discovered.append(url)
+            seen.add(clean_url)
+            discovered.append(
+                clean_url
+            )
             if len(discovered) >= max_pages:
                 break
         return discovered
@@ -426,6 +479,7 @@ class CrawlService:
         urls: list[str],
     ) -> list[CrawledPage]:
         pages = []
+        seen_final_urls = set()
         for url in urls:
             page_type = "general"
             try:
@@ -434,6 +488,12 @@ class CrawlService:
                     headers=self.headers,
                     timeout=self.timeout,
                     allow_redirects=True,
+                )
+                final_url = response.url.rstrip("/")
+                if final_url in seen_final_urls:
+                    continue
+                seen_final_urls.add(
+                    final_url
                 )
                 soup = BeautifulSoup(
                     response.text,
@@ -467,8 +527,11 @@ class CrawlService:
                 parsed = urlparse(response.url)
                 path = parsed.path.lower().strip("/")
                 path_words = (
-                    path.replace("-", " ")
+                    path
+                    .replace("-", " ")
                     .replace("_", " ")
+                    .replace("/", " ")
+                    .replace(".", " ")
                     .split()
                 )
                 page_type = self._classify_page(
@@ -479,11 +542,13 @@ class CrawlService:
                     page_type = "general"
                 pages.append(
                     CrawledPage(
-                        url=response.url,
+                        url=final_url,
                         title=title,
                         status_code=response.status_code,
                         page_type=page_type,
-                        successful=True,
+                        successful=(
+                            response.status_code < 400
+                        ),
                         image_count=image_count,
                         heading_count=heading_count,
                         link_count=link_count,
@@ -495,7 +560,7 @@ class CrawlService:
             except requests.RequestException:
                 pages.append(
                     CrawledPage(
-                        url=url,
+                        url=final_url,
                         title=None,
                         status_code=None,
                         page_type=page_type,

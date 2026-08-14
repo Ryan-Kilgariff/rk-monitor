@@ -1,0 +1,5 @@
+Priority,Manual Review,URL,Strength,Recommended Service,Commercial Score,Technical Score,Site Quality Score,Content Quality Score,Primary Problem,Outreach Angle,Supporting Reasons,High Issues,Medium Issues,Low Issues,Booking Provider,Booking Links,Scan Successful,Error
+1,Yes,https://www.broadstairsbeachhouse.co.uk/,STRONG,Website Redesign,58,89,25,70,Mobile viewport not detected,Booking journey,Mobile viewport not detected | No room booking route detected | Limited hospitality website structure,2,0,1,,0,Yes,
+1,Yes,https://www.hotelrelish.co.uk/,STRONG,Website Recovery / Redesign,,90,,,Website content appears unrelated to the hospitality business,Website reliability,Website content appears unrelated to the hospitality business | SSL certificate verification problem,2,0,0,,0,Limited,
+3,Yes,https://www.fourseasonsbookings.co.uk/,POSSIBLE,Targeted Website Improvements,77,97,85,45,Broken internal link detected,Website reliability,Broken internal link detected | Weak or repetitive website content,0,1,1,,1,Yes,
+4,No,https://www.walpolebayhotel.co.uk/,WEAK,RK Monitor,89,99,95,70,No major automated issue detected,General website review,,0,0,1,Direct Book,1,Yes,

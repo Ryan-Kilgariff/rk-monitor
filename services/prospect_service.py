@@ -355,6 +355,14 @@ class ProspectService:
             if "slow" in title:
                 return "performance"
             return "technical_health"
+        if issue.category == "Website Content":
+            if (
+                "returned an error" in title
+                or "returned errors" in title
+                or "could not be loaded" in title
+            ):
+                return "broken_links"
+            return "website_content"
         if issue.category == "Room Presentation":
             return "room_presentation"
         if issue.category == "Guest Information":

@@ -422,56 +422,28 @@ class IssueService:
         crawled_pages: list[CrawledPage],
     ) -> list[Issue]:
         issues = []
+        page_errors = {}
         for page in crawled_pages:
             if not page.successful:
-                issues.append(
-                    Issue(
-                        severity="HIGH",
-                        category="Website Content",
-                        title=(
-                            f"{page.page_type.title()} "
-                            f"page could not be loaded"
-                        ),
-                        evidence=page.url,
-                        commercial_impact=(
-                            "Guests may encounter a "
-                            "broken or inaccessible "
-                            "important page."
-                        ),
-                        recommended_action=(
-                            "Investigate the page and "
-                            "restore access."
-                        ),
-                    )
+                page_errors.setdefault(
+                    page.page_type,
+                    [],
+                ).append(
+                    f"{page.url} could not be loaded"
                 )
                 continue
             if (
                 page.status_code is not None
                 and page.status_code >= 400
             ):
-                issues.append(
-                    Issue(
-                        severity="HIGH",
-                        category="Website Content",
-                        title=(
-                            f"{page.page_type.title()} "
-                            f"page returned an error"
-                        ),
-                        evidence=(
-                            f"{page.url} returned "
-                            f"HTTP {page.status_code}."
-                        ),
-                        commercial_impact=(
-                            "Guests may be unable to "
-                            "access important hospitality "
-                            "information."
-                        ),
-                        recommended_action=(
-                            "Repair or redirect the "
-                            "affected page."
-                        ),
-                    )
+                page_errors.setdefault(
+                    page.page_type,
+                    [],
+                ).append(
+                    f"{page.url} returned "
+                    f"HTTP {page.status_code}"
                 )
+                continue
             if (
                 page.page_type == "rooms"
                 and page.image_count == 0
@@ -543,6 +515,46 @@ class IssueService:
                         ),
                     )
                 )
+        for page_type, errors in page_errors.items():
+            page_name = (
+                page_type
+                .replace("_", " ")
+                .title()
+            )
+            error_count = len(errors)
+            if error_count == 1:
+                title = (
+                    f"{page_name} page returned an error"
+                )
+                evidence = errors[0]
+            else:
+                title = (
+                    f"Multiple {page_name.lower()} "
+                    f"pages returned errors"
+                )
+                evidence = (
+                    f"{error_count} {page_name.lower()} "
+                    f"pages failed. Examples: "
+                    + " | ".join(
+                        errors[:3]
+                    )
+                )
+            issues.append(
+                Issue(
+                    severity="HIGH",
+                    category="Website Content",
+                    title=title,
+                    evidence=evidence,
+                    commercial_impact=(
+                        "Guests may be unable to access "
+                        "important hospitality information."
+                    ),
+                    recommended_action=(
+                        "Repair, remove or redirect the "
+                        "affected pages."
+                    ),
+                )
+            )
         return issues
     def _sort_issues(
         self,

@@ -56,6 +56,7 @@ class ScanService:
             not scan_result.successful
             and not scan_result.dns_resolution_failed
             and not scan_result.connection_failed
+            and not scan_result.timeout_occurred
         ):
             raise RuntimeError(
                 scan_result.error_message
