@@ -145,7 +145,11 @@ class ScanService:
                         page.booking_links
                     )
             booking_links = sorted(
-                all_booking_links
+                link
+                for link in all_booking_links
+                if scanner.is_valid_booking_route(
+                    link
+                )
             )
             booking_provider = (
                 scanner.detect_booking_provider(

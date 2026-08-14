@@ -97,6 +97,10 @@ class CsvService:
                     limited_analysis = (
                         not result.scan_result.successful
                         or (
+                            result.scan_result.status_code is not None
+                            and result.scan_result.status_code >= 400
+                        )
+                        or (
                             result.domain_identity is not None
                             and result.domain_identity.mismatch_detected
                         )

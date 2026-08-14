@@ -3,7 +3,6 @@ from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 @dataclass
-@dataclass
 class CrawledPage:
     url: str
     title: str | None
@@ -17,49 +16,6 @@ class CrawledPage:
     word_count: int = 0
     content_text: str = ""
 class CrawlService:
-    IMPORTANT_PAGE_TERMS = {
-        "rooms": (
-            "room",
-            "rooms",
-            "accommodation",
-            "bedroom",
-            "stay",
-        ),
-        "offers": (
-            "offer",
-            "offers",
-            "special offer",
-            "packages",
-            "break",
-        ),
-        "dining": (
-            "restaurant",
-            "dining",
-            "food",
-            "eat",
-            "bar",
-        ),
-        "events": (
-            "wedding",
-            "weddings",
-            "event",
-            "events",
-            "conference",
-            "meeting",
-            "functions",
-        ),
-        "guest_information": (
-            "guest information",
-            "faq",
-            "frequently asked",
-            "information",
-        ),
-        "contact": (
-            "contact",
-            "find us",
-            "location",
-        ),
-    }
     def __init__(
         self,
         timeout: int = 10,
@@ -73,6 +29,28 @@ class CrawlService:
                 "(compatible; RKMonitor/0.1; Website Monitoring)"
             )
         }
+    def _normalise_page_path(
+        self,
+        url: str,
+    ) -> tuple[str, list[str]]:
+        parsed = urlparse(url)
+        path = (
+            parsed.path
+            .lower()
+            .strip("/")
+        )
+        path_words = (
+            path
+            .replace("-", " ")
+            .replace("_", " ")
+            .replace("/", " ")
+            .replace(".", " ")
+            .split()
+        )
+        return (
+            path,
+            path_words,
+        )
     def find_important_pages(
         self,
         links: list[str],
@@ -81,18 +59,13 @@ class CrawlService:
         for url in links:
             if not self._is_page_url(url):
                 continue
-            parsed = urlparse(url)
-            path = parsed.path.lower().strip("/")
+            path, path_words = (
+                self._normalise_page_path(
+                    url
+                )
+            )
             if not path:
                 continue
-            path_words = (
-                path
-                .replace("-", " ")
-                .replace("_", " ")
-                .replace("/", " ")
-                .replace(".", " ")
-                .split()
-            )
             page_type = self._classify_page(
                 path,
                 path_words,
@@ -152,7 +125,9 @@ class CrawlService:
                         title=title,
                         status_code=response.status_code,
                         page_type=page_type,
-                        successful=True,
+                        successful=(
+                            response.status_code < 400
+                        ),
                         image_count=image_count,
                         heading_count=heading_count,
                         link_count=link_count,
@@ -266,12 +241,35 @@ class CrawlService:
                     absolute_url
                 )
         return sorted(links)
+    def _is_article_like_path(
+        self,
+        path_words: list[str],
+    ) -> bool:
+        if not path_words:
+            return False
+        article_starters = {
+            "how",
+            "why",
+            "what",
+            "which",
+            "when",
+            "where",
+            "who",
+        }
+        return (
+            path_words[0] in article_starters
+            and len(path_words) >= 4
+        )
     def _classify_page(
         self,
         path: str,
         path_words: list[str],
     ) -> str | None:
         joined_path = " ".join(path_words)
+        if self._is_article_like_path(
+            path_words
+        ):
+            return None
         page_rules = {
             "rooms": (
                 "room",
@@ -524,15 +522,10 @@ class CrawlService:
                         href=True,
                     )
                 )
-                parsed = urlparse(response.url)
-                path = parsed.path.lower().strip("/")
-                path_words = (
-                    path
-                    .replace("-", " ")
-                    .replace("_", " ")
-                    .replace("/", " ")
-                    .replace(".", " ")
-                    .split()
+                path, path_words = (
+                    self._normalise_page_path(
+                        response.url
+                    )
                 )
                 page_type = self._classify_page(
                     path,
@@ -560,7 +553,7 @@ class CrawlService:
             except requests.RequestException:
                 pages.append(
                     CrawledPage(
-                        url=final_url,
+                        url=url,
                         title=None,
                         status_code=None,
                         page_type=page_type,

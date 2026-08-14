@@ -386,6 +386,41 @@ class WebsiteScanner:
             if text_match or domain_match or href_match:
                 links.add(absolute_url)
         return sorted(links)
+    def is_valid_booking_route(
+        self,
+        url: str,
+    ) -> bool:
+        parsed = urlparse(url)
+        path = (
+            parsed.path
+            .lower()
+            .strip("/")
+        )
+        path_words = (
+            path
+            .replace("-", " ")
+            .replace("_", " ")
+            .replace("/", " ")
+            .replace(".", " ")
+            .split()
+        )
+        if not path_words:
+            return True
+        article_starters = {
+            "how",
+            "why",
+            "what",
+            "which",
+            "when",
+            "where",
+            "who",
+        }
+        if (
+            path_words[0] in article_starters
+            and len(path_words) >= 4
+        ):
+            return False
+        return True
     def detect_booking_provider(
         self,
         booking_links: list[str],
