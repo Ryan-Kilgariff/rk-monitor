@@ -23,6 +23,7 @@ from services.domain_identity_service import (
     DomainIdentityService,
     DomainIdentityResult,
 )
+from services.visual_scan_service import VisualScanService
 @dataclass
 class FullScanResult:
     scan_result: ScanResult
@@ -189,7 +190,34 @@ class ScanService:
             )
         )
         # --------------------------------------------------
-        # 6. ISSUE ANALYSIS
+        # 6. VISUAL ROOM ANALYSIS
+        # --------------------------------------------------
+        visual_result = None
+        room_page_candidates = [
+            page
+            for page in crawled_pages
+            if (
+                page.page_type == "rooms"
+                and page.successful
+                and (
+                    page.status_code is None
+                    or page.status_code < 400
+                )
+            )
+        ]
+        if room_page_candidates:
+            room_page = min(
+                room_page_candidates,
+                key=lambda page: len(page.url),
+            )
+            visual_service = VisualScanService()
+            visual_result = visual_service.scan(
+                room_page.url,
+                width=1440,
+                height=900,
+            )
+        # --------------------------------------------------
+        # 7. ISSUE ANALYSIS
         # --------------------------------------------------
         issue_service = IssueService()
         issues = issue_service.analyse(
@@ -198,7 +226,8 @@ class ScanService:
             booking_provider=booking_provider,
             all_booking_links=booking_links,
             link_results=link_results,
-            domain_identity=domain_identity
+            visual_result=visual_result,
+            domain_identity=domain_identity,
         )
         # --------------------------------------------------
         # 7. TECHNICAL SCORE
