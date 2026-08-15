@@ -20,6 +20,8 @@ class IssueService:
         all_booking_links: list[str],
         link_results: list[LinkCheckResult],
         visual_result: VisualScanResult | None = None,
+        homepage_visual_result: VisualScanResult | None = None,
+        mobile_homepage_visual_result: VisualScanResult | None = None,
         domain_identity=None,
     ) -> list[Issue]:
         issues = []
@@ -88,6 +90,18 @@ class IssueService:
                 issues.extend(
                     self._analyse_visual_room_presentation(
                         visual_result
+                    )
+                )
+            if homepage_visual_result is not None:
+                issues.extend(
+                    self._analyse_visual_navigation(
+                        homepage_visual_result
+                    )
+                )
+            if mobile_homepage_visual_result is not None:
+                issues.extend(
+                    self._analyse_mobile_layout(
+                        mobile_homepage_visual_result
                     )
                 )
             issues.extend(
@@ -598,6 +612,90 @@ class IssueService:
                         "Provide clear, substantial room "
                         "photography for each accommodation "
                         "type or room offering."
+                    ),
+                )
+            )
+        return issues
+    def _analyse_visual_navigation(
+        self,
+        visual_result: VisualScanResult,
+    ) -> list[Issue]:
+        issues = []
+        if not visual_result.successful:
+            return issues
+        if visual_result.navigation_issue:
+            issues.append(
+                Issue(
+                    severity="MEDIUM",
+                    category="Mobile Experience",
+                    title=(
+                        "Navigation layout exceeds "
+                        "the viewport"
+                    ),
+                    evidence=(
+                        f"Navigation width: "
+                        f"{visual_result.navigation_width}px. "
+                        f"Viewport width: "
+                        f"{visual_result.viewport_width}px. "
+                        f"Viewport ratio: "
+                        f"{visual_result.navigation_viewport_ratio:.2f}. "
+                        f"{visual_result.navigation_item_count} "
+                        f"navigation item(s) detected."
+                    ),
+                    commercial_impact=(
+                        "An oversized navigation layout "
+                        "can make menus harder to use and "
+                        "may cause content to extend beyond "
+                        "the visible page area."
+                    ),
+                    recommended_action=(
+                        "Review navigation spacing, menu "
+                        "width and responsive behaviour "
+                        "across common screen sizes."
+                    ),
+                )
+            )
+        return issues
+    def _analyse_mobile_layout(
+        self,
+        visual_result: VisualScanResult,
+    ) -> list[Issue]:
+        issues = []
+        if not visual_result.successful:
+            return issues
+        critical_overflow_count = (
+            visual_result.critical_overflow_elements
+        )
+        if (
+            critical_overflow_count > 0
+            and visual_result.navigation_issue
+        ):
+            issues.append(
+                Issue(
+                    severity="MEDIUM",
+                    category="Mobile Experience",
+                    title=(
+                        "Mobile layout contains "
+                        "clipped navigation content"
+                    ),
+                    evidence=(
+                        f"{critical_overflow_count} "
+                        f"critically clipped element(s) "
+                        f"were detected at a "
+                        f"{visual_result.viewport_width}px "
+                        f"viewport. Navigation overflow "
+                        f"was also detected."
+                    ),
+                    commercial_impact=(
+                        "Mobile guests may encounter "
+                        "cut-off or difficult-to-use "
+                        "navigation and page content."
+                    ),
+                    recommended_action=(
+                        "Review the mobile navigation "
+                        "and responsive layout at common "
+                        "phone widths and remove visible "
+                        "content clipping."
                     ),
                 )
             )

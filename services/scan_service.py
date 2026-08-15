@@ -192,7 +192,7 @@ class ScanService:
         # --------------------------------------------------
         # 6. VISUAL ROOM ANALYSIS
         # --------------------------------------------------
-        visual_result = None
+        room_visual_result = None
         room_page_candidates = [
             page
             for page in crawled_pages
@@ -211,10 +211,33 @@ class ScanService:
                 key=lambda page: len(page.url),
             )
             visual_service = VisualScanService()
-            visual_result = visual_service.scan(
+            room_visual_result = visual_service.scan(
                 room_page.url,
                 width=1440,
                 height=900,
+            )
+        # --------------------------------------------------
+        # HOMEPAGE VISUAL ANALYSIS
+        # --------------------------------------------------
+        homepage_visual_result = None
+        if scan_result.successful:
+            visual_service = VisualScanService()
+            homepage_visual_result = (
+                visual_service.scan(
+                    scan_result.url,
+                    width=1440,
+                    height=900,
+                )
+            )
+        mobile_homepage_visual_result = None
+        if scan_result.successful:
+            visual_service = VisualScanService()
+            mobile_homepage_visual_result = (
+                visual_service.scan(
+                    scan_result.url,
+                    width=390,
+                    height=844,
+                )
             )
         # --------------------------------------------------
         # 7. ISSUE ANALYSIS
@@ -226,7 +249,13 @@ class ScanService:
             booking_provider=booking_provider,
             all_booking_links=booking_links,
             link_results=link_results,
-            visual_result=visual_result,
+            visual_result=room_visual_result,
+            homepage_visual_result=(
+                homepage_visual_result
+            ),
+            mobile_homepage_visual_result=(
+                mobile_homepage_visual_result
+            ),
             domain_identity=domain_identity,
         )
         # --------------------------------------------------

@@ -3,9 +3,9 @@ from services.visual_scan_service import (
 )
 scanner = VisualScanService()
 result = scanner.scan(
-    "https://www.thefalstafframsgate.com/hotelrooms",
-    width=1440,
-    height=900,
+    "https://www.thefalstafframsgate.com/",
+    width=390,
+    height=844,
 )
 print()
 print("VISUAL SCAN")
