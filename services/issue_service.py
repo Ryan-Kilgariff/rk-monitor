@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from services.website_scanner import ScanResult
 from services.crawl_service import CrawledPage
 from services.link_checker import LinkCheckResult
+from services.visual_scan_service import VisualScanResult
 @dataclass
 class Issue:
     severity: str
@@ -18,6 +19,7 @@ class IssueService:
         booking_provider: str | None,
         all_booking_links: list[str],
         link_results: list[LinkCheckResult],
+        visual_result: VisualScanResult | None = None,
         domain_identity=None,
     ) -> list[Issue]:
         issues = []
@@ -82,6 +84,12 @@ class IssueService:
                     crawled_pages
                 )
             )
+            if visual_result is not None:
+                issues.extend(
+                    self._analyse_visual_room_presentation(
+                        visual_result
+                    )
+                )
             issues.extend(
                 self._analyse_link_health(
                     link_results
@@ -552,6 +560,44 @@ class IssueService:
                     recommended_action=(
                         "Repair, remove or redirect the "
                         "affected pages."
+                    ),
+                )
+            )
+        return issues
+    def _analyse_visual_room_presentation(
+        self,
+        visual_result: VisualScanResult,
+    ) -> list[Issue]:
+        issues = []
+        if not visual_result.successful:
+            return issues
+        if visual_result.room_presentation_issue:
+            issues.append(
+                Issue(
+                    severity="MEDIUM",
+                    category="Room Presentation",
+                    title=(
+                        "Limited room visual presentation"
+                    ),
+                    evidence=(
+                        f"{visual_result.room_offering_count} "
+                        f"room offering(s) were detected, "
+                        f"with "
+                        f"{visual_result.substantial_visual_image_count} "
+                        f"substantial visual image(s). "
+                        f"Coverage: "
+                        f"{visual_result.images_per_room_offering:.2f} "
+                        f"images per offering."
+                    ),
+                    commercial_impact=(
+                        "Guests may have limited visual "
+                        "information when comparing room "
+                        "or accommodation options."
+                    ),
+                    recommended_action=(
+                        "Provide clear, substantial room "
+                        "photography for each accommodation "
+                        "type or room offering."
                     ),
                 )
             )

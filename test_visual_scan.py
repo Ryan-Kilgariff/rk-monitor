@@ -3,7 +3,7 @@ from services.visual_scan_service import (
 )
 scanner = VisualScanService()
 result = scanner.scan(
-    "https://wycliffeguesthouse.co.uk/",
+    "https://www.thefalstafframsgate.com/hotelrooms",
     width=1440,
     height=900,
 )
@@ -156,6 +156,140 @@ print(
     f"Navigation Issue: "
     f"{result.navigation_issue}"
 )
+print()
+print("ROOM / CONTENT IMAGES")
+print("-" * 60)
+print(
+    f"Content Images: "
+    f"{result.content_image_count}"
+)
+print(
+    f"Large Content Images: "
+    f"{result.large_content_image_count}"
+)
+print(
+    f"Small Content Images: "
+    f"{result.small_content_image_count}"
+)
+print(
+    f"Upscaled Images: "
+    f"{result.upscaled_image_count}"
+)
+print(
+    f"Background Images: "
+    f"{result.background_image_count}"
+)
+print(
+    f"Substantial Visual Images: "
+    f"{result.substantial_visual_image_count}"
+)
+print(
+    f"Room Offerings: "
+    f"{result.room_offering_count}"
+)
+print(
+    f"Offering Detection Source: "
+    f"{result.room_offering_source}"
+)
+print(
+    f"Images Per Room Offering: "
+    f"{result.images_per_room_offering:.2f}"
+)
+print(
+    f"Room Presentation Issue: "
+    f"{result.room_presentation_issue}"
+)
+print()
+print("ROOM OFFERING CANDIDATES")
+print("-" * 60)
+for offering in result.room_offerings:
+    print()
+    print(
+        f"  Tag: {offering['tag']}"
+    )
+    print(
+        f"  Class: "
+        f"{offering['className']}"
+    )
+    print(
+        f"  Heading: "
+        f"{offering['heading']}"
+    )
+    print(
+        f"  Link: "
+        f"{offering['href']}"
+    )
+    print(
+        f"  Size: "
+        f"{offering['width']} x "
+        f"{offering['height']}"
+    )
+    print(
+        f"  Text: "
+        f"{offering['text']}"
+    )
+    print()
+print("ROOM STRUCTURE CANDIDATES")
+print("-" * 60)
+for candidate in (
+    result.room_structure_candidates
+):
+    print()
+    print(
+        f"  Type: "
+        f"{candidate['type']}"
+    )
+    print(
+        f"  Text: "
+        f"{candidate['text']}"
+    )
+    if candidate["href"]:
+        print(
+            f"  Link: "
+            f"{candidate['href']}"
+        )
+for image in result.background_images:
+    print()
+    print(
+        f"  Background Element: "
+        f"{image['tag']}"
+    )
+    print(
+        f"  Class: "
+        f"{image['className']}"
+    )
+    print(
+        f"  Rendered: "
+        f"{image['renderedWidth']} x "
+        f"{image['renderedHeight']}"
+    )
+    print(
+        f"  Background: "
+        f"{image['backgroundImage'][:120]}"
+    )
+for image in result.content_images:
+    print()
+    print(
+        f"  Alt: {image['alt']}"
+    )
+    print(
+        f"  Rendered: "
+        f"{image['renderedWidth']} x "
+        f"{image['renderedHeight']}"
+    )
+    print(
+        f"  Native: "
+        f"{image['naturalWidth']} x "
+        f"{image['naturalHeight']}"
+    )
+    print(
+        f"  Scale Ratio: "
+        f"{image['scaleRatio']:.2f}x"
+    )
+    print(
+        f"  Source: "
+        f"{image['src'][:100]}"
+    )
 for element in result.overflow_elements:
     print()
     print(

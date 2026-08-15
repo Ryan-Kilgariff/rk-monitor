@@ -30,9 +30,134 @@ class VisualScanResult:
     navigation_longest_label_length: int
     navigation_dense: bool
     navigation_issue: bool
+    content_image_count: int
+    large_content_image_count: int
+    small_content_image_count: int
+    upscaled_image_count: int
+    content_images: list[dict]
+    background_image_count: int
+    background_images: list[dict]
+    substantial_visual_image_count: int
+    room_offering_count: int
+    room_offering_source: str
+    room_offerings: list[dict]
+    images_per_room_offering: float
+    room_presentation_issue: bool
+    room_structure_candidates: list[dict]
     broken_images: int
     error_message: str | None = None
 class VisualScanService:
+    def _is_specific_room_label(
+        self,
+        text: str,
+    ) -> bool:
+        cleaned = " ".join(
+            text.lower().split()
+        )
+        if not cleaned:
+            return False
+        generic_labels = {
+            "room",
+            "rooms",
+            "our rooms",
+            "hotel rooms",
+            "our hotel rooms",
+            "accommodation",
+            "book a room",
+            "book room",
+        }
+        if cleaned in generic_labels:
+            return False
+        generic_prefixes = (
+            "our rooms &",
+            "our rooms and",
+            "find out more",
+            "castaways offers",
+        )
+        if cleaned.startswith(
+            generic_prefixes
+        ):
+            return False
+        excluded_terms = (
+            "accessibility",
+            "review",
+            "parking",
+            "book a room",
+            "booking",
+        )
+        if any(
+            term in cleaned
+            for term in excluded_terms
+        ):
+            return False
+        room_terms = (
+            "room",
+            "suite",
+            "double",
+            "twin",
+            "single",
+            "family",
+            "king",
+            "superior",
+            "deluxe",
+        )
+        if not any(
+            term in cleaned
+            for term in room_terms
+        ):
+            return False
+        if len(cleaned) > 110:
+            return False
+        return True
+    def _get_room_offering_count(
+        self,
+        structure_candidates: list[dict],
+        visual_offerings: list[dict],
+    ) -> tuple[int, str]:
+        specific_links = {
+            " ".join(
+                candidate["text"]
+                .lower()
+                .split()
+            )
+            for candidate in structure_candidates
+            if (
+                candidate["type"] == "link"
+                and self._is_specific_room_label(
+                    candidate["text"]
+                )
+            )
+        }
+        if specific_links:
+            return (
+                len(specific_links),
+                "room_links",
+            )
+        specific_headings = {
+            " ".join(
+                candidate["text"]
+                .lower()
+                .split()
+            )
+            for candidate in structure_candidates
+            if (
+                candidate["type"] == "heading"
+                and self._is_specific_room_label(
+                    candidate["text"]
+                )
+            )
+        }
+        if specific_headings:
+            return (
+                len(specific_headings),
+                "room_headings",
+            )
+        if visual_offerings:
+            return (
+                len(visual_offerings),
+                "visual_cards",
+            )
+        return (0, "none")
     def scan(
         self,
         url: str,
@@ -151,11 +276,18 @@ class VisualScanService:
                                             elementSrc.includes("google.com/recaptcha")
                                         )
                                     );
+                                const isKnownCarousel =
+                                    classText.includes("carousel") ||
+                                    classText.includes("slider") ||
+                                    classText.includes("slides") ||
+                                    classText.includes("slick-track") ||
+                                    classText.includes("swiper-wrapper");
                                 const transformed =
                                     style.transform !== "none";
                                 if (
                                     isSkipLink ||
                                     isKnownFloatingWidget ||
+                                    isKnownCarousel ||
                                     (
                                         fullyOffScreen &&
                                         (
@@ -702,6 +834,504 @@ class VisualScanService:
                     }
                     """
                 )
+                content_image_metrics = page.evaluate(
+                    """
+                    () => {
+                        const viewportWidth =
+                            window.innerWidth;
+                        const images = Array.from(
+                            document.querySelectorAll("img")
+                        )
+                        .map(image => {
+                            const rect =
+                                image.getBoundingClientRect();
+                            const style =
+                                window.getComputedStyle(image);
+                            const classText = (
+                                typeof image.className === "string"
+                                    ? image.className
+                                    : ""
+                            );
+                            const altText =
+                                image.getAttribute("alt") || "";
+                            const src =
+                                image.currentSrc ||
+                                image.getAttribute("src") ||
+                                "";
+                            const identityText = (
+                                classText +
+                                " " +
+                                altText +
+                                " " +
+                                src
+                            ).toLowerCase();
+                            const renderedWidth =
+                                Math.round(rect.width);
+                            const renderedHeight =
+                                Math.round(rect.height);
+                            const naturalWidth =
+                                image.naturalWidth || 0;
+                            const naturalHeight =
+                                image.naturalHeight || 0;
+                            const widthScale =
+                                naturalWidth > 0
+                                    ? renderedWidth /
+                                        naturalWidth
+                                    : 0;
+                            const heightScale =
+                                naturalHeight > 0
+                                    ? renderedHeight /
+                                        naturalHeight
+                                    : 0;
+                            const scaleRatio =
+                                Math.max(
+                                    widthScale,
+                                    heightScale
+                                );
+                            const visible = !(
+                                style.display === "none" ||
+                                style.visibility === "hidden" ||
+                                parseFloat(
+                                    style.opacity || "1"
+                                ) === 0 ||
+                                rect.width <= 0 ||
+                                rect.height <= 0
+                            );
+                            const likelyBranding =
+                                identityText.includes("logo") ||
+                                identityText.includes("brand");
+                            const likelyIcon =
+                                renderedWidth <= 80 &&
+                                renderedHeight <= 80;
+                            return {
+                                alt:
+                                    altText,
+                                className:
+                                    classText,
+                                src:
+                                    src,
+                                top:
+                                    Math.round(rect.top),
+                                renderedWidth:
+                                    renderedWidth,
+                                renderedHeight:
+                                    renderedHeight,
+                                naturalWidth:
+                                    naturalWidth,
+                                naturalHeight:
+                                    naturalHeight,
+                                scaleRatio:
+                                    Math.round(
+                                        scaleRatio * 100
+                                    ) / 100,
+                                visible:
+                                    visible,
+                                likelyBranding:
+                                    likelyBranding,
+                                likelyIcon:
+                                    likelyIcon,
+                            };
+                        })
+                        .filter(image =>
+                            image.visible &&
+                            !image.likelyBranding &&
+                            !image.likelyIcon
+                        );
+                        const substantial = images.filter(
+                            image =>
+                                image.renderedWidth >= 200 &&
+                                image.renderedHeight >= 120
+                        );
+                        const small = images.filter(
+                            image =>
+                                (
+                                    image.renderedWidth < 200 ||
+                                    image.renderedHeight < 120
+                                )
+                        );
+                        const upscaled = images.filter(
+                            image =>
+                                image.scaleRatio > 1.15
+                        );
+                        const backgroundImages = Array.from(
+                            document.querySelectorAll("body *")
+                        )
+                        .map(element => {
+                            const rect =
+                                element.getBoundingClientRect();
+                            const style =
+                                window.getComputedStyle(element);
+                            const backgroundImage =
+                                style.backgroundImage || "";
+                            const visible = !(
+                                style.display === "none" ||
+                                style.visibility === "hidden" ||
+                                parseFloat(
+                                    style.opacity || "1"
+                                ) === 0 ||
+                                rect.width <= 0 ||
+                                rect.height <= 0
+                            );
+                            const hasBackgroundImage =
+                                backgroundImage !== "none" &&
+                                backgroundImage.includes("url(");
+                           const className =
+                                typeof element.className === "string"
+                                    ? element.className
+                                    : "";
+                            const identityText = (
+                                className +
+                                " " +
+                                backgroundImage
+                            ).toLowerCase();
+                            const likelyDecorative =
+                                identityText.includes("blur") ||
+                                identityText.includes("background") ||
+                                identityText.includes("pattern") ||
+                                identityText.includes("texture") ||
+                                className
+                                    .toLowerCase()
+                                    .includes("parallax");
+                            return {
+                                tag:
+                                    element.tagName
+                                        .toLowerCase(),
+                                className:
+                                    className,
+                                backgroundImage:
+                                    backgroundImage,
+                                top:
+                                    Math.round(rect.top),
+                                renderedWidth:
+                                    Math.round(rect.width),
+                                renderedHeight:
+                                    Math.round(rect.height),
+                                visible:
+                                    visible,
+                                hasBackgroundImage:
+                                    hasBackgroundImage,
+                                likelyDecorative:
+                                    likelyDecorative,
+                            };
+                        })
+                        .filter(item =>
+                            item.visible &&
+                            item.hasBackgroundImage &&
+                            !item.likelyDecorative &&
+                            item.renderedWidth >= 200 &&
+                            item.renderedHeight >= 120
+                        )
+                        .slice(0, 30);
+                        return {
+                            total:
+                                images.length,
+                            large:
+                                substantial.length,
+                            small:
+                                small.length,
+                            upscaled:
+                                upscaled.length,
+                            images:
+                                images.slice(0, 30),
+                            backgroundImages:
+                                backgroundImages,
+                            backgroundImageCount:
+                                backgroundImages.length,
+                        };
+                    }
+                    """
+                )
+                room_metrics = page.evaluate(
+                    """
+                    () => {
+                        const roomTerms = [
+                            "room",
+                            "suite",
+                            "double",
+                            "twin",
+                            "single",
+                            "family",
+                            "king",
+                            "superior",
+                            "deluxe"
+                        ];
+                        const isVisible = element => {
+                            const style =
+                                window.getComputedStyle(element);
+                            const rect =
+                                element.getBoundingClientRect();
+                            return !(
+                                style.display === "none" ||
+                                style.visibility === "hidden" ||
+                                parseFloat(
+                                    style.opacity || "1"
+                                ) === 0 ||
+                                rect.width <= 0 ||
+                                rect.height <= 0
+                            );
+                        };
+                        const hasSubstantialVisual =
+                            element => {
+                                const images = Array.from(
+                                    element.querySelectorAll("img")
+                                );
+                                const normalImage =
+                                    images.some(image => {
+                                        const rect =
+                                            image.getBoundingClientRect();
+                                        return (
+                                            rect.width >= 200 &&
+                                            rect.height >= 120
+                                        );
+                                    });
+                                if (normalImage) {
+                                    return true;
+                                }
+                                const descendants = [
+                                    element,
+                                    ...element.querySelectorAll("*")
+                                ];
+                                return descendants.some(
+                                    child => {
+                                        const rect =
+                                            child.getBoundingClientRect();
+                                        const style =
+                                            window.getComputedStyle(
+                                                child
+                                            );
+                                        return (
+                                            style.backgroundImage !==
+                                                "none" &&
+                                            style.backgroundImage.includes(
+                                                "url("
+                                            ) &&
+                                            rect.width >= 200 &&
+                                            rect.height >= 120
+                                        );
+                                    }
+                                );
+                            };
+                        const candidates = Array.from(
+                            document.querySelectorAll(
+                                "article, section, li, " +
+                                "[class*='room'], " +
+                                "[class*='suite'], " +
+                                "[class*='accommodation']"
+                            )
+                        )
+                        .filter(element => {
+                            if (!isVisible(element)) {
+                                return false;
+                            }
+                            const rect =
+                                element.getBoundingClientRect();
+                            if (
+                                rect.height < 120 ||
+                                rect.height > 1200
+                            ) {
+                                return false;
+                            }
+                            const text = (
+                                element.innerText || ""
+                            )
+                            .trim()
+                            .toLowerCase();
+                            const classText = (
+                                typeof element.className ===
+                                    "string"
+                                    ? element.className
+                                    : ""
+                            ).toLowerCase();
+                            const roomContext =
+                                roomTerms.some(
+                                    term =>
+                                        text.includes(term) ||
+                                        classText.includes(term)
+                                );
+                            return (
+                                roomContext &&
+                                hasSubstantialVisual(element)
+                            );
+                        });
+                        /*
+                        * Keep the smallest qualifying
+                        * visual room container.
+                        *
+                        * If a child also qualifies, the
+                        * larger parent is just a wrapper.
+                        */
+                        const visualCards = candidates.filter(
+                            element =>
+                                !candidates.some(
+                                    other =>
+                                        other !== element &&
+                                        element.contains(other)
+                                )
+                        );
+                        const offerings = visualCards.map(
+                            element => {
+                                const rect =
+                                    element.getBoundingClientRect();
+                                const heading =
+                                    element.querySelector(
+                                        "h1, h2, h3, h4, h5, h6"
+                                    );
+                                const link =
+                                    element.querySelector(
+                                        "a[href]"
+                                    );
+                                const text = (
+                                    element.innerText || ""
+                                )
+                                .trim()
+                                .replace(/\\s+/g, " ")
+                                .slice(0, 160);
+                                return {
+                                    tag:
+                                        element.tagName
+                                            .toLowerCase(),
+                                    className:
+                                        typeof element.className ===
+                                            "string"
+                                            ? element.className
+                                            : "",
+                                    heading:
+                                        heading
+                                            ? (
+                                                heading.innerText ||
+                                                ""
+                                            ).trim()
+                                            : "",
+                                    href:
+                                        link
+                                            ? link.href
+                                            : "",
+                                    text:
+                                        text,
+                                    width:
+                                        Math.round(
+                                            rect.width
+                                        ),
+                                    height:
+                                        Math.round(
+                                            rect.height
+                                        ),
+                                };
+                            }
+                        );
+                        return {
+                            count:
+                                offerings.length,
+                            offerings:
+                                offerings.slice(0, 30),
+                        };
+                    }
+                    """
+                )
+                room_structure_candidates = page.evaluate(
+                    """
+                    () => {
+                        const roomTerms = [
+                            "room",
+                            "suite",
+                            "double",
+                            "twin",
+                            "single",
+                            "family",
+                            "king",
+                            "superior",
+                            "deluxe"
+                        ];
+                        const results = [];
+                        const addCandidate = (
+                            type,
+                            text,
+                            href = ""
+                        ) => {
+                            const cleaned = (
+                                text || ""
+                            )
+                            .trim()
+                            .replace(/\\s+/g, " ");
+                            if (!cleaned) {
+                                return;
+                            }
+                            const lower =
+                                cleaned.toLowerCase();
+                            if (
+                                !roomTerms.some(
+                                    term =>
+                                        lower.includes(term)
+                                )
+                            ) {
+                                return;
+                            }
+                            results.push({
+                                type:
+                                    type,
+                                text:
+                                    cleaned.slice(
+                                        0,
+                                        160
+                                    ),
+                                href:
+                                    href,
+                            });
+                        };
+                        for (
+                            const heading of
+                            document.querySelectorAll(
+                                "h1, h2, h3, h4, h5, h6"
+                            )
+                        ) {
+                            addCandidate(
+                                "heading",
+                                heading.innerText
+                            );
+                        }
+                        for (
+                            const link of
+                            document.querySelectorAll(
+                                "a[href]"
+                            )
+                        ) {
+                            addCandidate(
+                                "link",
+                                link.innerText,
+                                link.href
+                            );
+                        }
+                        for (
+                            const option of
+                            document.querySelectorAll(
+                                "option"
+                            )
+                        ) {
+                            addCandidate(
+                                "option",
+                                option.innerText
+                            );
+                        }
+                        const unique = [];
+                        const seen = new Set();
+                        for (const item of results) {
+                            const key = (
+                                item.type +
+                                "|" +
+                                item.text.toLowerCase() +
+                                "|" +
+                                item.href
+                            );
+                            if (seen.has(key)) {
+                                continue;
+                            }
+                            seen.add(key);
+                            unique.push(item);
+                        }
+                        return unique.slice(0, 40);
+                    }
+                    """
+                )
                 broken_images = page.evaluate(
                     """
                     () => Array.from(
@@ -784,6 +1414,58 @@ class VisualScanService:
                 navigation_issue = (
                     navigation_overflow
                 )
+                content_image_count = (
+                    content_image_metrics["total"]
+                )
+                large_content_image_count = (
+                    content_image_metrics["large"]
+                )
+                small_content_image_count = (
+                    content_image_metrics["small"]
+                )
+                upscaled_image_count = (
+                    content_image_metrics["upscaled"]
+                )
+                content_images = (
+                    content_image_metrics["images"]
+                )
+                background_image_count = (
+                    content_image_metrics[
+                        "backgroundImageCount"
+                    ]
+                )
+                background_images = (
+                    content_image_metrics[
+                        "backgroundImages"
+                    ]
+                )
+                substantial_visual_image_count = (
+                    large_content_image_count
+                    + background_image_count
+                )
+                room_offerings = (
+                    room_metrics["offerings"]
+                )
+                room_structure = (
+                    room_structure_candidates
+                )
+                (
+                    room_offering_count,
+                    room_offering_source,
+                ) = self._get_room_offering_count(
+                    room_structure,
+                    room_offerings,
+                )
+                images_per_room_offering = (
+                    substantial_visual_image_count /
+                    room_offering_count
+                    if room_offering_count > 0
+                    else 0.0
+                )
+                room_presentation_issue = (
+                    room_offering_count >= 3
+                    and images_per_room_offering < 0.5
+                )
                 browser.close()
                 return VisualScanResult(
                     url=url,
@@ -834,8 +1516,44 @@ class VisualScanService:
                     ),
                     navigation_dense=navigation_dense,
                     navigation_issue=navigation_issue,
+                    content_image_count=(
+                        content_image_count
+                    ),
+                    large_content_image_count=(
+                        large_content_image_count
+                    ),
+                    small_content_image_count=(
+                        small_content_image_count
+                    ),
+                    upscaled_image_count=(
+                        upscaled_image_count
+                    ),
+                    content_images=content_images,
+                    background_image_count=(
+                        background_image_count
+                    ),
+                    background_images=(
+                        background_images
+                    ),
+                    substantial_visual_image_count=(
+                        substantial_visual_image_count
+                    ),
+                    room_offering_count=room_offering_count,
+                    room_offering_source=(
+                        room_offering_source
+                    ),
+                    room_offerings=room_offerings,
+                    images_per_room_offering=(
+                        images_per_room_offering
+                    ),
+                    room_presentation_issue=(
+                        room_presentation_issue
+                    ),
+                    room_structure_candidates=(
+                        room_structure
+                    ),
                     broken_images=broken_images,
-                                    )
+                )
         except Exception as exc:
             return VisualScanResult(
                 url=url,
@@ -866,6 +1584,20 @@ class VisualScanService:
                 navigation_longest_label_length=0,
                 navigation_dense=False,
                 navigation_issue=False,
+                content_image_count=0,
+                large_content_image_count=0,
+                small_content_image_count=0,
+                upscaled_image_count=0,
+                content_images=[],
+                background_image_count=0,
+                background_images=[],
+                substantial_visual_image_count=0,
+                room_offering_count=0,
+                room_offering_source="none",
+                room_offerings=[],
+                room_structure_candidates=[],
+                images_per_room_offering=0.0,
+                room_presentation_issue=False,
                 broken_images=0,
                 error_message=str(exc),
             )
