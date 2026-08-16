@@ -59,6 +59,8 @@ def initialize_database() -> None:
                 issue_code TEXT,
                 confidence TEXT,
                 requires_review INTEGER NOT NULL DEFAULT 0,
+                review_status TEXT,
+                review_note TEXT,
                 evidence TEXT,
                 commercial_impact TEXT,
                 recommended_action TEXT,
@@ -95,6 +97,20 @@ def initialize_database() -> None:
                 ALTER TABLE issues
                 ADD COLUMN requires_review INTEGER
                 NOT NULL DEFAULT 0
+                """
+            )
+        if "review_status" not in issue_columns:
+            cursor.execute(
+                """
+                ALTER TABLE issues
+                ADD COLUMN review_status TEXT
+                """
+            )
+        if "review_note" not in issue_columns:
+            cursor.execute(
+                """
+                ALTER TABLE issues
+                ADD COLUMN review_note TEXT
                 """
             )
         conn.commit()

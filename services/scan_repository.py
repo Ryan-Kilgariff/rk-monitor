@@ -76,11 +76,13 @@ class ScanRepository:
                         issue_code,
                         confidence,
                         requires_review,
+                        review_status,
+                        review_note,
                         evidence,
                         commercial_impact,
                         recommended_action
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         scan_id,
@@ -90,6 +92,12 @@ class ScanRepository:
                         issue.issue_code,
                         issue.confidence,
                         int(issue.requires_review),
+                        (
+                            "PENDING"
+                            if issue.requires_review
+                            else "NOT_REQUIRED"
+                        ),
+                        None,
                         issue.evidence,
                         issue.commercial_impact,
                         issue.recommended_action,

@@ -5,6 +5,7 @@ from services.batch_scan_service import BatchScanService
 from services.batch_report_service import BatchReportService
 from datetime import datetime
 from services.csv_service import CsvService
+from services.issue_review_service import IssueReviewService
 def run_single_scan() -> None:
     url = input(
         "\nWebsite URL: "
@@ -122,6 +123,69 @@ def run_csv_scan() -> None:
         f"Results exported to: "
         f"{output_path}"
     )
+def run_issue_review() -> None:
+    review_service = IssueReviewService()
+    pending = review_service.get_pending_reviews()
+    if not pending:
+        print()
+        print("No pending issues to review.")
+        return
+    print()
+    print("PENDING ISSUE REVIEWS")
+    print("-" * 60)
+    for issue in pending:
+        print()
+        print(
+            f"Issue ID: {issue.issue_id}"
+        )
+        print(
+            f"Website: {issue.website_url}"
+        )
+        print(
+            f"[{issue.severity}] {issue.title}"
+        )
+        print(
+            f"Category: {issue.category}"
+        )
+        print(
+            f"Confidence: {issue.confidence}"
+        )
+        if issue.evidence:
+            print(
+                f"Evidence: {issue.evidence}"
+            )
+        print()
+        print("1. Confirm")
+        print("2. False Positive")
+        print("3. Ignore")
+        print("4. Skip")
+        choice = input(
+            "\nReview action: "
+        ).strip()
+        if choice == "4":
+            continue
+        status_map = {
+            "1": "CONFIRMED",
+            "2": "FALSE_POSITIVE",
+            "3": "IGNORED",
+        }
+        status = status_map.get(choice)
+        if status is None:
+            print(
+                "Invalid option - issue skipped."
+            )
+            continue
+        note = input(
+            "Review note (optional): "
+        ).strip()
+        review_service.update_review(
+            issue.issue_id,
+            status,
+            note or None,
+        )
+        print(
+            f"Issue marked as {status}."
+        )
 def main() -> None:
     initialize_database()
     print()
@@ -133,7 +197,8 @@ def main() -> None:
     print("1. Single Website Scan")
     print("2. Batch Prospect Scan")
     print("3. Scan Prospects From CSV")
-    print("4. Exit")
+    print("4. Review Pending Issues")
+    print("5. Exit")
     choice = input(
         "\nSelect option: "
     ).strip()
@@ -144,6 +209,8 @@ def main() -> None:
     elif choice == "3":
         run_csv_scan()
     elif choice == "4":
+        run_issue_review()
+    elif choice == "5":
         print(
             "\nGoodbye."
         )
