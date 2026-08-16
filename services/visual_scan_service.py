@@ -182,6 +182,68 @@ class VisualScanService:
                 )
                 page.wait_for_timeout(1500)
                 page_title = page.title()
+                challenge_titles = {
+                    "one moment, please...",
+                    "just a moment...",
+                    "checking your browser...",
+                    "attention required!",
+                }
+                normalised_title = (
+                    page_title
+                    .strip()
+                    .lower()
+                )
+                if normalised_title in challenge_titles:
+                    browser.close()
+                    return VisualScanResult(
+                                url=url,
+                                successful=False,
+                                page_title=page_title,
+                                viewport_width=width,
+                                viewport_height=height,
+                                page_width=0,
+                                page_height=0,
+                                horizontal_overflow=False,
+                                overflow_elements=[],
+                                critical_overflow_elements=0,
+                                offscreen_elements=0,
+                                header_detected=False,
+                                header_height=0,
+                                header_viewport_ratio=0.0,
+                                header_position=None,
+                                header_tag=None,
+                                header_class=None,
+                                oversized_header=False,
+                                branding_images=[],
+                                navigation_detected=False,
+                                navigation_width=0,
+                                navigation_viewport_ratio=0.0,
+                                navigation_overflow=False,
+                                navigation_item_count=0,
+                                navigation_longest_label=None,
+                                navigation_longest_label_length=0,
+                                navigation_dense=False,
+                                navigation_issue=False,
+                                content_image_count=0,
+                                large_content_image_count=0,
+                                small_content_image_count=0,
+                                upscaled_image_count=0,
+                                content_images=[],
+                                background_image_count=0,
+                                background_images=[],
+                                substantial_visual_image_count=0,
+                                room_offering_count=0,
+                                room_offering_source="none",
+                                room_offerings=[],
+                                room_structure_candidates=[],
+                                images_per_room_offering=0.0,
+                                room_presentation_issue=False,
+                                broken_images=0,
+                                error_message=(
+                                    "Visual scan blocked by "
+                                    "challenge/interstitial page."
+                                ),
+                            )
                 dimensions = page.evaluate(
                     """
                     () => ({
@@ -1337,9 +1399,20 @@ class VisualScanService:
                     () => Array.from(
                         document.images
                     ).filter(
-                        image =>
-                            image.complete &&
-                            image.naturalWidth === 0
+                        image => {
+                            const source = (
+                                image.currentSrc ||
+                                image.src ||
+                                ""
+                            ).trim();
+                            if (!source) {
+                                return false;
+                            }
+                            return (
+                                image.complete &&
+                                image.naturalWidth === 0
+                            );
+                        }
                     ).length
                     """
                 )
