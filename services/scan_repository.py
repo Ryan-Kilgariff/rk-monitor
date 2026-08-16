@@ -5,11 +5,12 @@ from services.link_checker import LinkCheckResult
 class ScanRepository:
     def save(
         self,
-        scan_result: ScanResult,
-        issues: list[Issue],
-        link_results: list[LinkCheckResult],
-        booking_provider: str | None,
-        booking_links: list[str],
+        scan_result,
+        issues,
+        link_results,
+        booking_provider,
+        booking_links,
+        detected_score: int,
         overall_score: int,
     ) -> int:
         conn = get_connection()
@@ -39,11 +40,12 @@ class ScanRepository:
                     booking_links_found,
                     internal_links_found,
                     broken_links_found,
+                    detected_score,
                     overall_score,
                     scan_successful,
                     error_message
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     website_id,
@@ -59,6 +61,7 @@ class ScanRepository:
                     len(booking_links),
                     len(scan_result.internal_links),
                     broken_links,
+                    detected_score,
                     overall_score,
                     int(scan_result.successful),
                     scan_result.error_message,

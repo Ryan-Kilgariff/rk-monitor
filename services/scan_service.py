@@ -284,12 +284,25 @@ class ScanService:
         # --------------------------------------------------
         # 7. TECHNICAL SCORE
         # --------------------------------------------------
+        scoring_issues = [
+            issue
+            for issue in issues
+            if (
+                not issue.requires_review
+                or issue.review_status == "CONFIRMED"
+            )
+        ]
         scoring_service = (
             ScoringService()
         )
-        score = (
+        detected_score = (
             scoring_service.calculate(
                 issues
+            )
+        )
+        score = (
+            scoring_service.calculate(
+                scoring_issues
             )
         )
         # --------------------------------------------------
@@ -328,6 +341,7 @@ class ScanService:
             link_results=link_results,
             booking_provider=booking_provider,
             booking_links=booking_links,
+            detected_score=detected_score.overall,
             overall_score=score.overall,
         )
         # --------------------------------------------------

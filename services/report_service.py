@@ -118,9 +118,19 @@ class ReportService:
                     f"Confidence: "
                     f"{issue.confidence}"
                 )
+                if issue.review_status == "CONFIRMED":
+                    review_text = "Confirmed"
+                elif issue.review_status == "FALSE_POSITIVE":
+                    review_text = "False Positive"
+                elif issue.review_status == "IGNORED":
+                    review_text = "Ignored"
+                else:
+                    review_text = (
+                        "Human review recommended"
+                    )
                 print(
-                    "Review Status: "
-                    "Human review recommended"
+                    f"Review Status: "
+                    f"{review_text}"
                 )
             print(
                 f"Evidence: "
@@ -274,25 +284,52 @@ class ReportService:
             )
         else:
             print(
-                f"Previous Score: "
+                f"Previous Trusted Score: "
                 f"{comparison.previous_score}"
             )
             print(
-                f"Current Score: "
+                f"Current Trusted Score: "
                 f"{comparison.current_score}"
             )
+            if (
+                comparison.previous_detected_score
+                is not None
+                and comparison.current_detected_score
+                is not None
+            ):
+                print(
+                    f"Previous Detected Score: "
+                    f"{comparison.previous_detected_score}"
+                )
+                print(
+                    f"Current Detected Score: "
+                    f"{comparison.current_detected_score}"
+                )
             if comparison.score_change is not None:
                 if comparison.score_change > 0:
-                    change = (
+                    trusted_change = (
                         f"+{comparison.score_change}"
                     )
                 else:
-                    change = str(
+                    trusted_change = str(
                         comparison.score_change
                     )
                 print(
-                    f"Score Change: "
-                    f"{change}"
+                    f"Trusted Score Change: "
+                    f"{trusted_change}"
+                )
+            if comparison.detected_score_change is not None:
+                if comparison.detected_score_change > 0:
+                    detected_change = (
+                        f"+{comparison.detected_score_change}"
+                    )
+                else:
+                    detected_change = str(
+                        comparison.detected_score_change
+                    )
+                print(
+                    f"Detected Score Change: "
+                    f"{detected_change}"
                 )
             if comparison.new_issues:
                 print()
@@ -309,9 +346,27 @@ class ReportService:
                         f" - {issue}"
                     )
             if (
+                comparison.detected_score_change == 0
+                and comparison.score_change is not None
+                and comparison.score_change != 0
+            ):
+                print()
+                print(
+                    "Trusted score changed due to "
+                    "review or validation decisions."
+                )
+                print(
+                    "No automated site-condition "
+                    "score change was detected."
+                )
+            elif (
                 not comparison.new_issues
                 and not comparison.resolved_issues
                 and comparison.score_change == 0
+                and (
+                    comparison.detected_score_change
+                    in (None, 0)
+                )
             ):
                 print()
                 print(

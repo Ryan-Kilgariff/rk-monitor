@@ -39,6 +39,7 @@ def initialize_database() -> None:
                 booking_links_found INTEGER NOT NULL DEFAULT 0,
                 internal_links_found INTEGER NOT NULL DEFAULT 0,
                 broken_links_found INTEGER NOT NULL DEFAULT 0,
+                detected_score INTEGER,
                 overall_score INTEGER,
                 scan_successful INTEGER NOT NULL DEFAULT 0,
                 error_message TEXT,
@@ -48,6 +49,20 @@ def initialize_database() -> None:
             )
             """
         )
+        cursor.execute(
+            "PRAGMA table_info(scans)"
+        )
+        scan_columns = {
+            row[1]
+            for row in cursor.fetchall()
+        }
+        if "detected_score" not in scan_columns:
+            cursor.execute(
+                """
+                ALTER TABLE scans
+                ADD COLUMN detected_score INTEGER
+                """
+            )
         cursor.execute(
             """
             CREATE TABLE IF NOT EXISTS issues (

@@ -1,12 +1,16 @@
 from dataclasses import dataclass
 from core.database import get_connection
 @dataclass
+@dataclass
 class ScanComparison:
     current_scan_id: int
     previous_scan_id: int | None
     current_score: int | None
     previous_score: int | None
     score_change: int | None
+    current_detected_score: int | None
+    previous_detected_score: int | None
+    detected_score_change: int | None
     new_issues: list[str]
     resolved_issues: list[str]
     has_previous_scan: bool
@@ -36,6 +40,7 @@ class MonitoringService:
                 """
                 SELECT
                     id,
+                    detected_score,
                     overall_score
                 FROM scans
                 WHERE website_id = ?
@@ -59,6 +64,11 @@ class MonitoringService:
                     ],
                     previous_score=None,
                     score_change=None,
+                    current_detected_score=current_scan[
+                        "detected_score"
+                    ],
+                    previous_detected_score=None,
+                    detected_score_change=None,
                     new_issues=[],
                     resolved_issues=[],
                     has_previous_scan=False,
@@ -111,12 +121,36 @@ class MonitoringService:
                     current_score
                     - previous_score
                 )
+            current_detected_score = current_scan[
+                "detected_score"
+            ]
+            previous_detected_score = previous_scan[
+                "detected_score"
+            ]
+            detected_score_change = None
+            if (
+                current_detected_score is not None
+                and previous_detected_score is not None
+            ):
+                detected_score_change = (
+                    current_detected_score
+                    - previous_detected_score
+                )
             return ScanComparison(
                 current_scan_id=current_scan["id"],
                 previous_scan_id=previous_scan["id"],
                 current_score=current_score,
                 previous_score=previous_score,
                 score_change=score_change,
+                current_detected_score=(
+                    current_detected_score
+                ),
+                previous_detected_score=(
+                    previous_detected_score
+                ),
+                detected_score_change=(
+                    detected_score_change
+                ),
                 new_issues=new_issues,
                 resolved_issues=resolved_issues,
                 has_previous_scan=True,
