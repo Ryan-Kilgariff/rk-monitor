@@ -24,6 +24,7 @@ from services.domain_identity_service import (
     DomainIdentityResult,
 )
 from services.visual_scan_service import VisualScanService
+from services.issue_review_service import IssueReviewService
 @dataclass
 class FullScanResult:
     scan_result: ScanResult
@@ -258,6 +259,28 @@ class ScanService:
             ),
             domain_identity=domain_identity,
         )
+        review_service = IssueReviewService()
+        previous_review_statuses = (
+            review_service.get_latest_review_statuses(
+                scan_result.url
+            )
+        )
+        for issue in issues:
+            if not issue.issue_code:
+                continue
+            previous_status = (
+                previous_review_statuses.get(
+                    issue.issue_code
+                )
+            )
+            if previous_status in (
+                "CONFIRMED",
+                "FALSE_POSITIVE",
+                "IGNORED",
+            ):
+                issue.review_status = (
+                    previous_status
+                )
         # --------------------------------------------------
         # 7. TECHNICAL SCORE
         # --------------------------------------------------

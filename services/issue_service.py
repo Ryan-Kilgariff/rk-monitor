@@ -4,7 +4,6 @@ from services.crawl_service import CrawledPage
 from services.link_checker import LinkCheckResult
 from services.visual_scan_service import VisualScanResult
 @dataclass
-@dataclass
 class Issue:
     severity: str
     category: str
@@ -15,6 +14,7 @@ class Issue:
     issue_code: str | None = None
     confidence: str = "HIGH"
     requires_review: bool = False
+    review_status: str | None = None
 class IssueService:
     def analyse(
         self,

@@ -24,9 +24,17 @@ class ProspectService:
         commercial = (
             commercial_score.commercial_score
         )
-        high_issues = [
+        qualification_issues = [
             issue
             for issue in issues
+            if (
+                not issue.requires_review
+                or issue.review_status == "CONFIRMED"
+            )
+        ]
+        high_issues = [
+            issue
+            for issue in qualification_issues
             if issue.severity == "HIGH"
         ]
         high_count = len(
@@ -34,12 +42,12 @@ class ProspectService:
         )
         medium_issues = [
             issue
-            for issue in issues
+            for issue in qualification_issues
             if issue.severity == "MEDIUM"
         ]
         low_issues = [
             issue
-            for issue in issues
+            for issue in qualification_issues
             if issue.severity == "LOW"
         ]
         high_families = {
@@ -65,16 +73,17 @@ class ProspectService:
             )
             for issue in issues
         )
+        outreach_issues = qualification_issues
         primary_problem = self._get_primary_problem(
-            issues
+            outreach_issues
         )
         outreach_angle = self._get_outreach_angle(
-            issues,
+            outreach_issues,
             commercial_score,
         )
         supporting_reasons = (
             self._get_supporting_reasons(
-                issues,
+                outreach_issues,
                 commercial_score,
             )
         )

@@ -60,6 +60,46 @@ class IssueReviewService:
             ]
         finally:
             conn.close()
+    def get_latest_review_statuses(
+        self,
+        website_url: str,
+    ) -> dict[str, str]:
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT
+                    issues.issue_code,
+                    issues.review_status
+                FROM issues
+                JOIN scans
+                    ON issues.scan_id = scans.id
+                JOIN websites
+                    ON scans.website_id = websites.id
+                WHERE websites.url = ?
+                  AND issues.issue_code IS NOT NULL
+                  AND issues.review_status IN (
+                      'CONFIRMED',
+                      'FALSE_POSITIVE',
+                      'IGNORED'
+                  )
+                ORDER BY issues.id DESC
+                """,
+                (website_url,),
+            )
+            rows = cursor.fetchall()
+            statuses: dict[str, str] = {}
+            for row in rows:
+                issue_code = row["issue_code"]
+                if issue_code in statuses:
+                    continue
+                statuses[issue_code] = (
+                    row["review_status"]
+                )
+            return statuses
+        finally:
+            conn.close()
     def update_review(
         self,
         issue_id: int,

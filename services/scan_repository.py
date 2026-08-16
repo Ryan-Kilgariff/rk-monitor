@@ -93,9 +93,13 @@ class ScanRepository:
                         issue.confidence,
                         int(issue.requires_review),
                         (
-                            "PENDING"
-                            if issue.requires_review
-                            else "NOT_REQUIRED"
+                            issue.review_status
+                            if issue.review_status
+                            else (
+                                "PENDING"
+                                if issue.requires_review
+                                else "NOT_REQUIRED"
+                            )
                         ),
                         None,
                         issue.evidence,
