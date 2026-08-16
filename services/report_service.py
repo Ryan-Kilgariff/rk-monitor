@@ -113,6 +113,15 @@ class ReportService:
                 f"Category: "
                 f"{issue.category}"
             )
+            if issue.requires_review:
+                print(
+                    f"Confidence: "
+                    f"{issue.confidence}"
+                )
+                print(
+                    "Review Status: "
+                    "Human review recommended"
+                )
             print(
                 f"Evidence: "
                 f"{issue.evidence}"

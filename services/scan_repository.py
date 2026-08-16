@@ -73,17 +73,23 @@ class ScanRepository:
                         severity,
                         category,
                         title,
+                        issue_code,
+                        confidence,
+                        requires_review,
                         evidence,
                         commercial_impact,
                         recommended_action
                     )
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         scan_id,
                         issue.severity,
                         issue.category,
                         issue.title,
+                        issue.issue_code,
+                        issue.confidence,
+                        int(issue.requires_review),
                         issue.evidence,
                         issue.commercial_impact,
                         issue.recommended_action,

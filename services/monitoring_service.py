@@ -65,24 +65,36 @@ class MonitoringService:
                 )
             previous_scan = scans[1]
             current_issues = (
-                self._get_issue_titles(
+                self._get_issue_map(
                     cursor,
                     current_scan["id"],
                 )
             )
             previous_issues = (
-                self._get_issue_titles(
+                self._get_issue_map(
                     cursor,
                     previous_scan["id"],
                 )
             )
+            current_keys = set(
+                current_issues.keys()
+            )
+            previous_keys = set(
+                previous_issues.keys()
+            )
             new_issues = sorted(
-                current_issues
-                - previous_issues
+                current_issues[key]
+                for key in (
+                    current_keys
+                    - previous_keys
+                )
             )
             resolved_issues = sorted(
-                previous_issues
-                - current_issues
+                previous_issues[key]
+                for key in (
+                    previous_keys
+                    - current_keys
+                )
             )
             current_score = current_scan[
                 "overall_score"
@@ -111,21 +123,28 @@ class MonitoringService:
             )
         finally:
             conn.close()
-    def _get_issue_titles(
+    def _get_issue_map(
         self,
         cursor,
         scan_id: int,
-    ) -> set[str]:
+    ) -> dict[str, str]:
         cursor.execute(
             """
-            SELECT title
+            SELECT title, issue_code
             FROM issues
             WHERE scan_id = ?
             """,
             (scan_id,),
         )
         rows = cursor.fetchall()
-        return {
-            row["title"]
-            for row in rows
-        }
+        issue_map: dict[str, str] = {}
+        for row in rows:
+            issue_code = row["issue_code"]
+            title = row["title"]
+            identity = (
+                issue_code
+                if issue_code
+                else f"title:{title}"
+            )
+            issue_map[identity] = title
+        return issue_map

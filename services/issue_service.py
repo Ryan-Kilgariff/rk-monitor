@@ -4,6 +4,7 @@ from services.crawl_service import CrawledPage
 from services.link_checker import LinkCheckResult
 from services.visual_scan_service import VisualScanResult
 @dataclass
+@dataclass
 class Issue:
     severity: str
     category: str
@@ -11,6 +12,9 @@ class Issue:
     evidence: str
     commercial_impact: str
     recommended_action: str
+    issue_code: str | None = None
+    confidence: str = "HIGH"
+    requires_review: bool = False
 class IssueService:
     def analyse(
         self,
@@ -593,6 +597,7 @@ class IssueService:
                     title=(
                         "Limited room visual presentation"
                     ),
+                    issue_code="visual.room_presentation",
                     evidence=(
                         f"{visual_result.room_offering_count} "
                         f"room offering(s) were detected, "
@@ -613,6 +618,8 @@ class IssueService:
                         "photography for each accommodation "
                         "type or room offering."
                     ),
+                    confidence="MEDIUM",
+                    requires_review=True,
                 )
             )
         return issues
@@ -629,11 +636,13 @@ class IssueService:
                     severity="MEDIUM",
                     category="Mobile Experience",
                     title=(
-                        "Navigation layout exceeds "
-                        "the viewport"
+                        "Navigation layout contains "
+                        "overflow"
                     ),
+                    issue_code="visual.navigation_overflow",
                     evidence=(
-                        f"Navigation width: "
+                        f"Navigation overflow was detected. "
+                        f"Navigation container width: "
                         f"{visual_result.navigation_width}px. "
                         f"Viewport width: "
                         f"{visual_result.viewport_width}px. "
@@ -643,16 +652,18 @@ class IssueService:
                         f"navigation item(s) detected."
                     ),
                     commercial_impact=(
-                        "An oversized navigation layout "
-                        "can make menus harder to use and "
-                        "may cause content to extend beyond "
-                        "the visible page area."
+                        "Navigation overflow can make menus "
+                        "harder to use and may cause links "
+                        "or controls to extend beyond their "
+                        "intended visible area."
                     ),
                     recommended_action=(
                         "Review navigation spacing, menu "
                         "width and responsive behaviour "
                         "across common screen sizes."
                     ),
+                    confidence="MEDIUM",
+                    requires_review=True,
                 )
             )
         return issues
@@ -678,6 +689,7 @@ class IssueService:
                         "Mobile layout contains "
                         "clipped navigation content"
                     ),
+                    issue_code="visual.mobile_clipped_navigation",
                     evidence=(
                         f"{critical_overflow_count} "
                         f"critically clipped element(s) "
@@ -697,6 +709,8 @@ class IssueService:
                         "phone widths and remove visible "
                         "content clipping."
                     ),
+                    confidence="MEDIUM",
+                    requires_review=True,
                 )
             )
         return issues

@@ -56,6 +56,9 @@ def initialize_database() -> None:
                 severity TEXT NOT NULL,
                 category TEXT NOT NULL,
                 title TEXT NOT NULL,
+                issue_code TEXT,
+                confidence TEXT,
+                requires_review INTEGER NOT NULL DEFAULT 0,
                 evidence TEXT,
                 commercial_impact TEXT,
                 recommended_action TEXT,
@@ -65,6 +68,35 @@ def initialize_database() -> None:
             )
             """
         )
+        cursor.execute(
+            "PRAGMA table_info(issues)"
+        )
+        issue_columns = {
+            row[1]
+            for row in cursor.fetchall()
+        }
+        if "issue_code" not in issue_columns:
+            cursor.execute(
+                """
+                ALTER TABLE issues
+                ADD COLUMN issue_code TEXT
+                """
+            )
+        if "confidence" not in issue_columns:
+            cursor.execute(
+                """
+                ALTER TABLE issues
+                ADD COLUMN confidence TEXT
+                """
+            )
+        if "requires_review" not in issue_columns:
+            cursor.execute(
+                """
+                ALTER TABLE issues
+                ADD COLUMN requires_review INTEGER
+                NOT NULL DEFAULT 0
+                """
+            )
         conn.commit()
     finally:
         conn.close()
