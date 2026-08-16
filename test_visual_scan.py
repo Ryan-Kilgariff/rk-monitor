@@ -3,7 +3,7 @@ from services.visual_scan_service import (
 )
 scanner = VisualScanService()
 result = scanner.scan(
-    "https://www.rocksaltfolkestone.co.uk/",
+    "https://www.juddsfollyhotel.co.uk/",
     width=390,
     height=844,
 )

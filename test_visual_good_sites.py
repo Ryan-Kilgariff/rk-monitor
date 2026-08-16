@@ -3,20 +3,16 @@ from services.visual_scan_service import (
 )
 SITES = [
     (
-        "Anand Lodge",
-        "https://www.anandlodge.co.uk/",
-    ),
-    (
-        "New Inn Sandwich",
-        "https://www.newinn-sandwich.co.uk/",
-    ),
-    (
-        "Rocksalt Folkestone",
-        "https://www.rocksaltfolkestone.co.uk/",
-    ),
-    (
-        "The Corner Broadstairs",
+        "Corner Broadstairs",
         "https://thecornerbroadstairs.co.uk/",
+    ),
+    (
+        "Clarendon Hotel",
+        "https://www.theclarendon-hotel.com/",
+    ),
+    (
+        "Judds Folly Hotel",
+        "https://www.juddsfollyhotel.co.uk/",
     ),
 ]
 def print_result(

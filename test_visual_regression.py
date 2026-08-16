@@ -242,6 +242,70 @@ def main() -> None:
                 "broken_images": 0,
             },
         },
+        {
+            "name": (
+                "Healthy Site - "
+                "Clarendon Desktop"
+            ),
+            "url": (
+                "https://www.theclarendon-hotel.com/"
+            ),
+            "width": 1440,
+            "height": 900,
+            "checks": {
+                "horizontal_overflow": False,
+                "navigation_issue": False,
+                "broken_images": 0,
+            },
+        },
+        {
+            "name": (
+                "Healthy Site - "
+                "Clarendon Mobile"
+            ),
+            "url": (
+                "https://www.theclarendon-hotel.com/"
+            ),
+            "width": 390,
+            "height": 844,
+            "checks": {
+                "horizontal_overflow": False,
+                "navigation_issue": False,
+                "broken_images": 0,
+            },
+        },
+        {
+            "name": (
+                "Mobile Layout - "
+                "Judds Folly Bad Control"
+            ),
+            "url": (
+                "https://www.juddsfollyhotel.co.uk/"
+            ),
+            "width": 390,
+            "height": 844,
+            "checks": {
+                "horizontal_overflow": True,
+                "navigation_overflow": True,
+                "navigation_issue": True,
+            },
+        },
+        {
+            "name": (
+                "Healthy Site - "
+                "Judds Folly Desktop"
+            ),
+            "url": (
+                "https://www.juddsfollyhotel.co.uk/"
+            ),
+            "width": 1440,
+            "height": 900,
+            "checks": {
+                "horizontal_overflow": False,
+                "navigation_issue": False,
+                "broken_images": 0,
+            },
+        },
     ]
     passed = 0
     failed = 0
