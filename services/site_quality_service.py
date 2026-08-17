@@ -33,6 +33,30 @@ class SiteQualityService:
             for page in successful_pages
             if page.page_type == "rooms"
         ]
+        homepage_room_pages = [
+            page
+            for page in successful_pages
+            if (
+                page.url.rstrip("/").count("/") == 2
+                and any(
+                    term in (
+                        (page.content_text or "")
+                        .lower()
+                    )
+                    for term in (
+                        "rooms",
+                        "room",
+                        "suites",
+                        "suite",
+                        "accommodation",
+                    )
+                )
+                and len(page.booking_links) >= 2
+            )
+        ]
+        for page in homepage_room_pages:
+            if page not in room_pages:
+                room_pages.append(page)
         has_rooms = bool(room_pages)
         has_dining = (
             "dining" in page_types

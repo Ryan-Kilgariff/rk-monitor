@@ -176,6 +176,7 @@ class CrawlService:
             "siteminder.com",
             "littlehotelier.com",
             "roomraccoon.com",
+            "roomraccoon.co.uk",
             "guestline.net",
             "synxis.com",
             "bookingbutton.com",
@@ -523,6 +524,10 @@ class CrawlService:
                         href=True,
                     )
                 )
+                booking_links = self._find_booking_links(
+                    response.url,
+                    soup,
+                )
                 path, path_words = (
                     self._normalise_page_path(
                         response.url
@@ -546,7 +551,7 @@ class CrawlService:
                         image_count=image_count,
                         heading_count=heading_count,
                         link_count=link_count,
-                        booking_links=[],
+                        booking_links=booking_links,
                         word_count=word_count,
                         content_text=content_text,
                     )

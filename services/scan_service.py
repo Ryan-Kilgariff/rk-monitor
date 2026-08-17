@@ -183,9 +183,13 @@ class ScanService:
         site_quality_service = (
             SiteQualityService()
         )
+        site_quality_pages = (
+            crawled_pages
+            + general_pages
+        )
         site_quality = (
             site_quality_service.analyse(
-                crawled_pages,
+                site_quality_pages,
                 booking_links,
             )
         )
