@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, unquote
 import requests
 from bs4 import BeautifulSoup
 @dataclass
@@ -372,7 +372,12 @@ class CrawlService:
         url: str,
     ) -> bool:
         parsed = urlparse(url)
-        path = parsed.path.lower()
+        path = unquote(
+            parsed.path
+        ).lower()
+        path = path.strip(
+            "\"'"
+        )
         excluded_extensions = (
             ".jpg",
             ".jpeg",
@@ -402,7 +407,11 @@ class CrawlService:
             str(soup),
             "html.parser",
         )
-        for element in working_soup.find_all(
+        content_root = (
+            working_soup.find("main")
+            or working_soup
+        )
+        for element in content_root.find_all(
             [
                 "script",
                 "style",
@@ -415,7 +424,7 @@ class CrawlService:
             ]
         ):
             element.decompose()
-        text = working_soup.get_text(
+        text = content_root.get_text(
             " ",
             strip=True,
         )
