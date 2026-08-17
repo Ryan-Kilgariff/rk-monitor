@@ -137,6 +137,17 @@ class PdfReportService:
             leading=13,
             spaceAfter=6,
         )
+        scan_incomplete = (
+            result.scan_result.connection_failed
+            or result.scan_result.ssl_verification_failed
+        )
+        commercial_score_display = (
+            "Not Fully Assessed"
+            if scan_incomplete
+            else (
+                f"{result.commercial_score.commercial_score} / 100"
+            )
+        )
         story.append(
             Paragraph(
                 "Commercial Website Score",
@@ -145,7 +156,8 @@ class PdfReportService:
         )
         story.append(
             Paragraph(
-                f"<b>{result.commercial_score.commercial_score} / 100</b>",                score_style,
+                f"<b>{commercial_score_display}</b>",
+                score_style,
             )
         )
         client_issues = [
@@ -156,10 +168,6 @@ class PdfReportService:
                 or issue.review_status == "CONFIRMED"
             )
         ]
-        scan_incomplete = (
-                    result.scan_result.connection_failed
-                    or result.scan_result.ssl_verification_failed
-                )
         commercial_score_value = (
             result.commercial_score.commercial_score
         )
