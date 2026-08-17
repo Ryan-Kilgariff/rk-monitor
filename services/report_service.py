@@ -3,15 +3,77 @@ class ReportService:
     def print_report(
         self,
         result: FullScanResult,
+        client_mode: bool = False,
     ) -> None:
         scan = result.scan_result
         score = result.score
         prospect = result.prospect
         comparison = result.comparison
+        if client_mode:
+            report_issues = [
+                issue
+                for issue in result.issues
+                if (
+                    not issue.requires_review
+                    or issue.review_status
+                    == "CONFIRMED"
+                )
+            ]
+        else:
+            report_issues = result.issues
         print()
         print("=" * 60)
-        print("RK MONITOR REPORT")
+        if client_mode:
+            print("RK MONITOR WEBSITE REVIEW")
+        else:
+            print("RK MONITOR REPORT")
         print("=" * 60)
+        if client_mode:
+            print()
+            print(
+                f"Overall Website Score: "
+                f"{score.overall} / 100"
+            )
+            verified_count = len(
+                report_issues
+            )
+            print(
+                f"Verified Findings: "
+                f"{verified_count}"
+            )
+            strengths = []
+            if scan.has_https:
+                strengths.append(
+                    "Secure HTTPS connection"
+                )
+            if scan.has_mobile_viewport:
+                strengths.append(
+                    "Mobile viewport configured"
+                )
+            if result.booking_links:
+                strengths.append(
+                    "Direct booking route detected"
+                )
+            if result.site_quality.has_rooms:
+                strengths.append(
+                    "Rooms or accommodation "
+                    "content detected"
+                )
+            if (
+                result.site_quality
+                .has_guest_information
+            ):
+                strengths.append(
+                    "Guest information available"
+                )
+            if strengths:
+                print()
+                print("STRENGTHS")
+                print("-" * 60)
+                for strength in strengths:
+                    print(
+                        f" - {strength}"
+                    )
         print()
         print("WEBSITE")
         print("-" * 60)
@@ -99,11 +161,11 @@ class ReportService:
         print()
         print("ISSUES")
         print("-" * 60)
-        if not result.issues:
+        if not report_issues:
             print(
                 "No significant issues detected."
             )
-        for issue in result.issues:
+        for issue in report_issues:
             print()
             print(
                 f"[{issue.severity}] "
@@ -113,7 +175,10 @@ class ReportService:
                 f"Category: "
                 f"{issue.category}"
             )
-            if issue.requires_review:
+            if (
+                issue.requires_review
+                and not client_mode
+            ):
                 print(
                     f"Confidence: "
                     f"{issue.confidence}"
@@ -240,144 +305,145 @@ class ReportService:
             )
             print()
         print()
-        print()
-        print("## PROSPECT QUALIFICATION")
-        print()
-        prospect = result.prospect
-        print(
-            f"Strength: "
-            f"{prospect.strength}"
-        )
-        print(
-            f"Recommended Service: "
-            f"{prospect.recommended_service}"
-        )
-        print(
-            f"Reason: "
-            f"{prospect.reason}"
-        )
-        print(
-            f"Primary Problem: "
-            f"{prospect.primary_problem}"
-        )
-        print(
-            f"Outreach Angle: "
-            f"{prospect.outreach_angle}"
-        )
-        if prospect.supporting_reasons:
+        if not client_mode:
             print()
-            print("Why this prospect:")
-            for reason in prospect.supporting_reasons:
-                print(
-                    f" - {reason}"
-                )
-        print()
-        print("MONITORING")
-        print("-" * 60)
-        if not comparison.has_previous_scan:
+            print("## PROSPECT QUALIFICATION")
+            print()
+            prospect = result.prospect
             print(
-                "First recorded scan."
+                f"Strength: "
+                f"{prospect.strength}"
             )
             print(
-                "Future scans will be "
-                "compared against this baseline."
-            )
-        else:
-            print(
-                f"Previous Trusted Score: "
-                f"{comparison.previous_score}"
+                f"Recommended Service: "
+                f"{prospect.recommended_service}"
             )
             print(
-                f"Current Trusted Score: "
-                f"{comparison.current_score}"
+                f"Reason: "
+                f"{prospect.reason}"
             )
-            if (
-                comparison.previous_detected_score
-                is not None
-                and comparison.current_detected_score
-                is not None
-            ):
-                print(
-                    f"Previous Detected Score: "
-                    f"{comparison.previous_detected_score}"
-                )
-                print(
-                    f"Current Detected Score: "
-                    f"{comparison.current_detected_score}"
-                )
-            if comparison.score_change is not None:
-                if comparison.score_change > 0:
-                    trusted_change = (
-                        f"+{comparison.score_change}"
+            print(
+                f"Primary Problem: "
+                f"{prospect.primary_problem}"
+            )
+            print(
+                f"Outreach Angle: "
+                f"{prospect.outreach_angle}"
+            )
+            if prospect.supporting_reasons:
+                print()
+                print("Why this prospect:")
+                for reason in prospect.supporting_reasons:
+                    print(
+                        f" - {reason}"
                     )
-                else:
-                    trusted_change = str(
-                        comparison.score_change
-                    )
+            print()
+            print("MONITORING")
+            print("-" * 60)
+            if not comparison.has_previous_scan:
                 print(
-                    f"Trusted Score Change: "
-                    f"{trusted_change}"
+                    "First recorded scan."
                 )
-            if comparison.detected_score_change is not None:
-                if comparison.detected_score_change > 0:
-                    detected_change = (
-                        f"+{comparison.detected_score_change}"
+                print(
+                    "Future scans will be "
+                    "compared against this baseline."
+                )
+            else:
+                print(
+                    f"Previous Trusted Score: "
+                    f"{comparison.previous_score}"
+                )
+                print(
+                    f"Current Trusted Score: "
+                    f"{comparison.current_score}"
+                )
+                if (
+                    comparison.previous_detected_score
+                    is not None
+                    and comparison.current_detected_score
+                    is not None
+                ):
+                    print(
+                        f"Previous Detected Score: "
+                        f"{comparison.previous_detected_score}"
                     )
-                else:
-                    detected_change = str(
+                    print(
+                        f"Current Detected Score: "
+                        f"{comparison.current_detected_score}"
+                    )
+                if comparison.score_change is not None:
+                    if comparison.score_change > 0:
+                        trusted_change = (
+                            f"+{comparison.score_change}"
+                        )
+                    else:
+                        trusted_change = str(
+                            comparison.score_change
+                        )
+                    print(
+                        f"Trusted Score Change: "
+                        f"{trusted_change}"
+                    )
+                if comparison.detected_score_change is not None:
+                    if comparison.detected_score_change > 0:
+                        detected_change = (
+                            f"+{comparison.detected_score_change}"
+                        )
+                    else:
+                        detected_change = str(
+                            comparison.detected_score_change
+                        )
+                    print(
+                        f"Detected Score Change: "
+                        f"{detected_change}"
+                    )
+                if comparison.new_issues:
+                    print()
+                    print("NEW ISSUES")
+                    for issue in comparison.new_issues:
+                        print(
+                            f" + {issue}"
+                        )
+                if comparison.resolved_issues:
+                    print()
+                    print("RESOLVED ISSUES")
+                    for issue in comparison.resolved_issues:
+                        print(
+                            f" - {issue}"
+                        )
+                if (
+                    comparison.detected_score_change == 0
+                    and comparison.score_change is not None
+                    and comparison.score_change != 0
+                ):
+                    print()
+                    print(
+                        "Trusted score changed due to "
+                        "review or validation decisions."
+                    )
+                    print(
+                        "No automated site-condition "
+                        "score change was detected."
+                    )
+                elif (
+                    not comparison.new_issues
+                    and not comparison.resolved_issues
+                    and comparison.score_change == 0
+                    and (
                         comparison.detected_score_change
+                        in (None, 0)
                     )
-                print(
-                    f"Detected Score Change: "
-                    f"{detected_change}"
-                )
-            if comparison.new_issues:
-                print()
-                print("NEW ISSUES")
-                for issue in comparison.new_issues:
+                ):
+                    print()
                     print(
-                        f" + {issue}"
+                        "No significant change "
+                        "since the previous scan."
                     )
-            if comparison.resolved_issues:
-                print()
-                print("RESOLVED ISSUES")
-                for issue in comparison.resolved_issues:
-                    print(
-                        f" - {issue}"
-                    )
-            if (
-                comparison.detected_score_change == 0
-                and comparison.score_change is not None
-                and comparison.score_change != 0
-            ):
-                print()
-                print(
-                    "Trusted score changed due to "
-                    "review or validation decisions."
-                )
-                print(
-                    "No automated site-condition "
-                    "score change was detected."
-                )
-            elif (
-                not comparison.new_issues
-                and not comparison.resolved_issues
-                and comparison.score_change == 0
-                and (
-                    comparison.detected_score_change
-                    in (None, 0)
-                )
-            ):
-                print()
-                print(
-                    "No significant change "
-                    "since the previous scan."
-                )
-        print()
-        print(
-            f"Scan saved successfully. "
-            f"Scan ID: {result.scan_id}"
-        )
+            print()
+            print(
+                f"Scan saved successfully. "
+                f"Scan ID: {result.scan_id}"
+            )
         print()
         print("## SITE QUALITY")
         print()
@@ -517,16 +583,38 @@ class ReportService:
                     print(
                         f"   {pair.second_url}"
                     )
-        if (
-            not limited_analysis
-            and result.general_pages
-        ):
+        if not client_mode:
+            if (
+                not limited_analysis
+                and result.general_pages
+            ):
+                print()
+                print("DISCOVERED PAGES")
+                for page in result.general_pages:
+                    print(
+                        f" - {page.url} "
+                        f"({page.word_count} words)"
+                    )
+        if client_mode:
             print()
-            print("DISCOVERED PAGES")
-            for page in result.general_pages:
+            print("RECOMMENDED NEXT STEP")
+            print("-" * 60)
+            if report_issues:
                 print(
-                    f" - {page.url} "
-                    f"({page.word_count} words)"
+                    "Review and address the verified "
+                    "findings above, prioritising issues "
+                    "that may affect the guest journey "
+                    "or direct booking experience."
+                )
+            else:
+                print(
+                    "No verified priority issues were "
+                    "identified in this review."
+                )
+                print(
+                    "Continue monitoring the website "
+                    "for technical, content and booking "
+                    "journey changes."
                 )
         print()
         print("=" * 60)

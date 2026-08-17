@@ -28,6 +28,29 @@ def run_single_scan() -> None:
     report_service.print_report(
         result
     )
+def run_client_report() -> None:
+    url = input(
+        "\nWebsite URL: "
+    ).strip()
+    print(
+        "\nScanning website...\n"
+    )
+    scan_service = ScanService()
+    try:
+        result = scan_service.run(
+            url
+        )
+    except RuntimeError as exc:
+        print(
+            f"SCAN FAILED: "
+            f"{exc}"
+        )
+        return
+    report_service = ReportService()
+    report_service.print_report(
+        result,
+        client_mode=True,
+    )
 def run_batch_scan() -> None:
     print()
     print(
@@ -198,7 +221,8 @@ def main() -> None:
     print("2. Batch Prospect Scan")
     print("3. Scan Prospects From CSV")
     print("4. Review Pending Issues")
-    print("5. Exit")
+    print("5. Client Website Report")
+    print("6. Exit")
     choice = input(
         "\nSelect option: "
     ).strip()
@@ -211,6 +235,8 @@ def main() -> None:
     elif choice == "4":
         run_issue_review()
     elif choice == "5":
+        run_client_report()
+    elif choice == "6":
         print(
             "\nGoodbye."
         )
