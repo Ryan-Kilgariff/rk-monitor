@@ -34,6 +34,10 @@ class ReportService:
                 f"Overall Website Score: "
                 f"{score.overall} / 100"
             )
+            print(
+                "Assessment Status: "
+                f"{result.assessment_status.title()}"
+            )
             verified_count = len(
                 report_issues
             )

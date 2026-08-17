@@ -468,6 +468,7 @@ class WebsiteScanner:
             "siteminder.com": "SiteMinder",
             "littlehotelier.com": "Little Hotelier",
             "roomraccoon.com": "RoomRaccoon",
+            "roomraccoon.co.uk": "RoomRaccoon",
             "guestline.net": "Guestline",
             "synxis.com": "SynXis",
             "bookingbutton.com": "BookingButton",
