@@ -263,39 +263,63 @@ class PdfReportService:
                 body_style,
             )
         )
+        mobile_status = (
+            "Not Assessed"
+            if scan_incomplete
+            else (
+                "Yes"
+                if result.scan_result.has_mobile_viewport
+                else "No"
+            )
+        )
+        analytics_status = (
+            "Not Assessed"
+            if scan_incomplete
+            else (
+                "Detected"
+                if result.scan_result.has_google_analytics
+                else "Not detected"
+            )
+        )
+        booking_status = (
+            "Not Assessed"
+            if scan_incomplete
+            else (
+                "Detected"
+                if result.booking_links
+                else "Not detected"
+            )
+        )
+        rooms_status = (
+            "Not Assessed"
+            if scan_incomplete
+            else (
+                "Detected"
+                if result.site_quality.has_rooms
+                else "Not detected"
+            )
+        )
         story.append(
             Paragraph(
-                (
-                    f"<b>Mobile Viewport:</b> "
-                    f"{'Yes' if result.scan_result.has_mobile_viewport else 'No'}"
-                ),
+                f"<b>Mobile Viewport:</b> {mobile_status}",
                 body_style,
             )
         )
         story.append(
             Paragraph(
-                (
-                    f"<b>Analytics:</b> "
-                    f"{'Detected' if result.scan_result.has_google_analytics else 'Not detected'}"
-                ),
+                f"<b>Analytics:</b> {analytics_status}",
                 body_style,
             )
         )
         story.append(
             Paragraph(
-                (
-                    f"<b>Booking Route:</b> "
-                    f"{'Detected' if result.site_quality.has_booking_route else 'Not detected'}"
-                ),
+                f"<b>Booking Route:</b> {booking_status}",
                 body_style,
             )
         )
         story.append(
             Paragraph(
-                (
-                    f"<b>Rooms / Accommodation:</b> "
-                    f"{'Detected' if result.site_quality.has_rooms else 'Not detected'}"
-                ),
+                f"<b>Rooms / Accommodation:</b> {rooms_status}",
                 body_style,
             )
         )
