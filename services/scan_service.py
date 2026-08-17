@@ -42,6 +42,16 @@ class FullScanResult:
     general_pages: list[CrawledPage]
     commercial_score: CommercialScoreResult
     domain_identity: DomainIdentityResult | None
+    @property
+    def assessment_status(self) -> str:
+        if not self.scan_result.successful:
+            return "PARTIAL"
+        if (
+            self.domain_identity is not None
+            and self.domain_identity.mismatch_detected
+        ):
+            return "PARTIAL"
+        return "COMPLETE"
 class ScanService:
     def run(
         self,

@@ -138,8 +138,7 @@ class PdfReportService:
             spaceAfter=6,
         )
         scan_incomplete = (
-            result.scan_result.connection_failed
-            or result.scan_result.ssl_verification_failed
+            result.assessment_status == "PARTIAL"
         )
         commercial_score_display = (
             "Not Fully Assessed"
@@ -158,6 +157,29 @@ class PdfReportService:
             Paragraph(
                 f"<b>{commercial_score_display}</b>",
                 score_style,
+            )
+        )
+        story.append(
+            Spacer(
+                1,
+                3 * mm,
+            )
+        )
+        assessment_status_display = (
+            "Partial"
+            if result.assessment_status == "PARTIAL"
+            else "Complete"
+        )
+        story.append(
+            Paragraph(
+                "Assessment Status",
+                heading_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                f"<b>{assessment_status_display}</b>",
+                body_style,
             )
         )
         client_issues = [
