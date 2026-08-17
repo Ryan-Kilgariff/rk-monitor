@@ -423,6 +423,9 @@ class IssueService:
                     severity="LOW",
                     category="Booking Journey",
                     title="Booking provider not recognised",
+                    issue_code="booking.provider_unrecognised",
+                    confidence="MEDIUM",
+                    requires_review=True,
                     evidence=(
                         "A booking link was detected, "
                         "but RK Monitor could not "

@@ -156,6 +156,53 @@ class PdfReportService:
                 or issue.review_status == "CONFIRMED"
             )
         ]
+        scan_incomplete = (
+                    result.scan_result.connection_failed
+                    or result.scan_result.ssl_verification_failed
+                )
+        commercial_score_value = (
+            result.commercial_score.commercial_score
+        )
+        if scan_incomplete:
+            summary_text = (
+                "The website could not be fully assessed because "
+                "RK Monitor encountered a technical connection issue. "
+                "The findings below reflect the areas that could be "
+                "verified during the scan."
+                )
+        elif commercial_score_value < 70:
+            summary_text = (
+                "The website is technically accessible, "
+                "but the review identified commercial "
+                "weaknesses that may affect the guest "
+                "journey and direct-booking experience."
+            )
+        elif commercial_score_value < 85:
+            summary_text = (
+                "The website has a generally functional "
+                "foundation, but several opportunities "
+                "were identified to improve the guest "
+                "journey, website structure or booking "
+                "experience."
+            )
+        else:
+            summary_text = (
+                "The website performs strongly overall, "
+                "with no major commercial weaknesses "
+                "identified during this review."
+            )
+        story.append(
+            Paragraph(
+                "Website Review Summary",
+                heading_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                summary_text,
+                body_style,
+            )
+        )
         story.append(
             Paragraph(
                 (
@@ -165,6 +212,15 @@ class PdfReportService:
                 body_style,
             )
         )
+        https_status = (
+            "Yes"
+            if (
+                result.scan_result.has_https
+                and not result.scan_result.ssl_verification_failed
+                and not result.scan_result.connection_failed
+            )
+            else "No"
+        )
         story.append(
             Paragraph(
                 "Website Snapshot",
@@ -173,10 +229,7 @@ class PdfReportService:
         )
         story.append(
             Paragraph(
-                (
-                    f"<b>HTTPS:</b> "
-                    f"{'Yes' if result.scan_result.has_https else 'No'}"
-                ),
+                f"<b>HTTPS:</b> {https_status}",
                 body_style,
             )
         )
@@ -233,11 +286,19 @@ class PdfReportService:
             ],
             [
                 "Booking Journey",
-                f"{result.score.booking_journey} / 100",
+                (
+                    "Not Assessed"
+                    if scan_incomplete
+                    else f"{result.score.booking_journey} / 100"
+                ),
             ],
             [
                 "Mobile Experience",
-                f"{result.score.mobile_experience} / 100",
+                (
+                    "Not Assessed"
+                    if scan_incomplete
+                    else f"{result.score.mobile_experience} / 100"
+                ),
             ],
             [
                 "Room Presentation",
@@ -257,7 +318,11 @@ class PdfReportService:
             ],
             [
                 "Analytics",
-                f"{result.score.analytics} / 100",
+                (
+                    "Not Assessed"
+                    if scan_incomplete
+                    else f"{result.score.analytics} / 100"
+                ),
             ],
         ]
         score_table = Table(
@@ -318,17 +383,13 @@ class PdfReportService:
             )
         )
         story.append(score_table)
-        story.append(
-            Paragraph(
-                "Strengths",
-                heading_style,
-            )
-        )
         strengths = []
-        if result.scan_result.has_https:
-            strengths.append(
-                "Secure HTTPS connection"
-            )
+        if (
+            result.scan_result.has_https
+            and not result.scan_result.ssl_verification_failed
+            and not result.scan_result.connection_failed
+        ):
+            strengths.append("Secure HTTPS connection")
         if result.scan_result.has_mobile_viewport:
             strengths.append(
                 "Mobile viewport configured"
@@ -345,13 +406,21 @@ class PdfReportService:
             strengths.append(
                 "Guest information available"
             )
-        for strength in strengths:
+        if strengths:
             story.append(
                 Paragraph(
-                    f"- {strength}",
-                    body_style,
+                    "Strengths",
+                    heading_style,
                 )
             )
+
+            for strength in strengths:
+                story.append(
+                    Paragraph(
+                        f"- {strength}",
+                        body_style,
+                    )
+                )
         story.append(
             PageBreak()
         )
