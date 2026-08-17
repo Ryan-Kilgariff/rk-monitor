@@ -191,6 +191,7 @@ class CrawlService:
             "youtube.com",
             "tiktok.com",
             "opentable.com",
+            "opentable.co.uk",
             "tripadvisor.com",
         )
         links = set()

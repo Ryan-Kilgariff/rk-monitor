@@ -47,3 +47,24 @@ def test_unknown_booking_provider_requires_review():
     assert issue.severity == "LOW"
     assert issue.confidence == "MEDIUM"
     assert issue.requires_review is True
+def test_rooms_without_booking_route_creates_one_booking_issue():
+    service = IssueService()
+    room_page = SimpleNamespace(
+        page_type="rooms",
+    )
+    issues = service._analyse_booking_journey(
+        scan_result=_successful_scan_result(),
+        crawled_pages=[room_page],
+        booking_provider=None,
+        all_booking_links=[],
+    )
+    booking_issues = [
+        issue
+        for issue in issues
+        if issue.category == "Booking Journey"
+    ]
+    assert len(booking_issues) == 1
+    assert (
+        booking_issues[0].title
+        == "Rooms detected without booking path"
+    )

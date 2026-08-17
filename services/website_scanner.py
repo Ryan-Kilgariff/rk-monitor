@@ -374,6 +374,7 @@ class WebsiteScanner:
             "youtube.com",
             "tiktok.com",
             "opentable.com",
+            "opentable.co.uk",
             "tripadvisor.com",
         )
         excluded_terms = (
@@ -445,6 +446,7 @@ class WebsiteScanner:
             "youtube.com",
             "tiktok.com",
             "opentable.com",
+            "opentable.co.uk",
             "tripadvisor.com",
         )
         if any(

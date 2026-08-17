@@ -371,7 +371,7 @@ class IssueService:
                     for page in crawled_pages
                     if page.page_type == "rooms"
                 ]
-        if not all_booking_links:
+        if not room_pages and not all_booking_links:
             issues.append(
                 Issue(
                     severity="HIGH",

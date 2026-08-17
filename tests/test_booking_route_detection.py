@@ -23,3 +23,12 @@ def test_random_external_link_is_rejected():
         "https://example.com/about-us"
     )
     assert result is False
+def test_opentable_uk_route_is_rejected():
+    scanner = WebsiteScanner()
+    result = scanner.is_valid_booking_route(
+        (
+            "https://www.opentable.co.uk/"
+            "booking/experiences-availability"
+        )
+    )
+    assert result is False
