@@ -317,6 +317,7 @@ class CrawlService:
             ),
             "guest_information": (
                 "faq",
+                "faqs",
                 "guest information",
                 "guest-info",
                 "guest-information",
