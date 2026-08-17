@@ -6,6 +6,7 @@ from services.batch_report_service import BatchReportService
 from datetime import datetime
 from services.csv_service import CsvService
 from services.issue_review_service import IssueReviewService
+from services.pdf_report_service import PdfReportService
 def run_single_scan() -> None:
     url = input(
         "\nWebsite URL: "
@@ -50,6 +51,31 @@ def run_client_report() -> None:
     report_service.print_report(
         result,
         client_mode=True,
+    )
+    export_choice = input(
+        "\nExport client report to PDF? "
+        "(y/n): "
+    ).strip().lower()
+    if export_choice != "y":
+        return
+    timestamp = datetime.now().strftime(
+        "%Y%m%d-%H%M%S"
+    )
+    output_path = (
+        f"exports/"
+        f"rk-monitor-client-report-"
+        f"{timestamp}.pdf"
+    )
+    pdf_service = PdfReportService()
+    saved_path = (
+        pdf_service.export_client_report(
+            result,
+            output_path,
+        )
+    )
+    print()
+    print(
+        f"PDF saved: {saved_path}"
     )
 def run_batch_scan() -> None:
     print()
