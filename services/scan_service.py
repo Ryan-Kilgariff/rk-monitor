@@ -183,9 +183,20 @@ class ScanService:
         site_quality_service = (
             SiteQualityService()
         )
-        site_quality_pages = (
+        site_quality_pages_by_url = {}
+        for page in (
             crawled_pages
             + general_pages
+        ):
+            normalised_url = (
+                page.url.rstrip("/")
+            )
+            if normalised_url not in site_quality_pages_by_url:
+                site_quality_pages_by_url[
+                    normalised_url
+                ] = page
+        site_quality_pages = list(
+            site_quality_pages_by_url.values()
         )
         site_quality = (
             site_quality_service.analyse(
