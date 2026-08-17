@@ -216,35 +216,60 @@ class ReportService:
         print()
         print("RK MONITOR SCORE")
         print("-" * 60)
-        print(
-            f"Technical Health:      "
-            f"{score.technical_health} / 100"
-        )
-        print(
-            f"Booking Journey:       "
-            f"{score.booking_journey} / 100"
-        )
-        print(
-            f"Mobile Experience:     "
-            f"{score.mobile_experience} / 100"
-        )
-        print(
-            f"Room Presentation:     "
-            f"{score.room_presentation} / 100"
-        )
-        print(
-            f"Guest Information:     "
-            f"{score.guest_information} / 100"
-        )
-        print(
-            f"Analytics:             "
-            f"{score.analytics} / 100"
-        )
-        print("-" * 60)
-        print(
-            f"OVERALL:               "
-            f"{score.overall} / 100"
-        )
+        if result.assessment_status == "PARTIAL":
+            print(
+                f"Technical Health:      "
+                f"{result.score.technical_health} / 100"
+            )
+            print(
+                "Booking Journey:       Not Assessed"
+            )
+            print(
+                "Mobile Experience:     Not Assessed"
+            )
+            print(
+                "Room Presentation:     Not Assessed"
+            )
+            print(
+                "Guest Information:     Not Assessed"
+            )
+            print(
+                "Analytics:             Not Assessed"
+            )
+            print("-" * 60)
+            print(
+                "OVERALL:               Not Fully Assessed"
+            )
+        else:
+            print(
+                f"Technical Health:      "
+                f"{result.score.technical_health} / 100"
+            )
+            print(
+                f"Booking Journey:       "
+                f"{result.score.booking_journey} / 100"
+            )
+            print(
+                f"Mobile Experience:     "
+                f"{result.score.mobile_experience} / 100"
+            )
+            print(
+                f"Room Presentation:     "
+                f"{result.score.room_presentation} / 100"
+            )
+            print(
+                f"Guest Information:     "
+                f"{result.score.guest_information} / 100"
+            )
+            print(
+                f"Analytics:             "
+                f"{result.score.analytics} / 100"
+            )
+            print("-" * 60)
+            print(
+                f"OVERALL:               "
+                f"{result.score.overall} / 100"
+            )
         print()
         print(
             f"High Issues:   "
