@@ -427,36 +427,64 @@ class WebsiteScanner:
         url: str,
     ) -> bool:
         parsed = urlparse(url)
-        path = (
-            parsed.path
+        domain = parsed.netloc.lower()
+        route_text = (
+            f"{parsed.path} {parsed.query}"
             .lower()
-            .strip("/")
-        )
-        path_words = (
-            path
             .replace("-", " ")
             .replace("_", " ")
             .replace("/", " ")
             .replace(".", " ")
-            .split()
         )
-        if not path_words:
-            return True
-        article_starters = {
-            "how",
-            "why",
-            "what",
-            "which",
-            "when",
-            "where",
-            "who",
-        }
-        if (
-            path_words[0] in article_starters
-            and len(path_words) >= 4
+        excluded_domains = (
+            "facebook.com",
+            "instagram.com",
+            "twitter.com",
+            "x.com",
+            "linkedin.com",
+            "youtube.com",
+            "tiktok.com",
+            "opentable.com",
+            "tripadvisor.com",
+        )
+        if any(
+            excluded_domain in domain
+            for excluded_domain in excluded_domains
         ):
             return False
-        return True
+        hotel_booking_domains = (
+            "eviivo.com",
+            "mews.com",
+            "cloudbeds.com",
+            "siteminder.com",
+            "littlehotelier.com",
+            "roomraccoon.com",
+            "roomraccoon.co.uk",
+            "guestline.net",
+            "synxis.com",
+            "bookingbutton.com",
+            "freeonlinebooking.com",
+            "direct-book.com",
+        )
+        if any(
+            booking_domain in domain
+            for booking_domain in hotel_booking_domains
+        ):
+            return True
+        booking_route_terms = (
+            "book",
+            "booking",
+            "reservation",
+            "reservations",
+            "reserve",
+            "availability",
+        )
+        if any(
+            term in route_text.split()
+            for term in booking_route_terms
+        ):
+            return True
+        return False
     def detect_booking_provider(
         self,
         booking_links: list[str],
