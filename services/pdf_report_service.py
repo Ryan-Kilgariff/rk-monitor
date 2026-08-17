@@ -103,10 +103,18 @@ class PdfReportService:
                 prepared_style,
             )
         )
+        url_style = ParagraphStyle(
+            "RKUrl",
+            parent=body_style,
+            alignment=TA_CENTER,
+            fontSize=9,
+            leading=12,
+            spaceAfter=4,
+        )
         story.append(
             Paragraph(
                 result.scan_result.url,
-                body_style,
+                url_style,
             )
         )
         story.append(
@@ -131,17 +139,13 @@ class PdfReportService:
         )
         story.append(
             Paragraph(
-                "Overall Website Score",
+                "Commercial Website Score",
                 score_label_style,
             )
         )
         story.append(
             Paragraph(
-                (
-                    f"<b>{result.score.overall}"
-                    f" / 100</b>"
-                ),
-                score_style,
+                f"<b>{result.commercial_score.commercial_score} / 100</b>",                score_style,
             )
         )
         client_issues = [
@@ -237,11 +241,19 @@ class PdfReportService:
             ],
             [
                 "Room Presentation",
-                f"{result.score.room_presentation} / 100",
+                (
+                    f"{result.score.room_presentation} / 100"
+                    if result.site_quality.has_rooms
+                    else "Not Assessed"
+                ),
             ],
             [
                 "Guest Information",
-                f"{result.score.guest_information} / 100",
+                (
+                    f"{result.score.guest_information} / 100"
+                    if result.site_quality.has_guest_information
+                    else "Not Assessed"
+                ),
             ],
             [
                 "Analytics",

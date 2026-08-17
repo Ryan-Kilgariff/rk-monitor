@@ -52,6 +52,32 @@ def run_client_report() -> None:
         result,
         client_mode=True,
     )
+    pending_review_issues = [
+    issue
+        for issue in result.issues
+        if (
+            issue.requires_review
+            and issue.review_status not in (
+                "CONFIRMED",
+                "FALSE_POSITIVE",
+                "IGNORED",
+            )
+        )
+    ]
+    if pending_review_issues:
+        print()
+        print(
+            "Client report is not ready for export."
+        )
+        print(
+            f"{len(pending_review_issues)} finding(s) "
+            "still require manual review."
+        )
+        print(
+            "Use option 4 to review them, then "
+            "rerun the client website report."
+        )
+        return
     export_choice = input(
         "\nExport client report to PDF? "
         "(y/n): "
