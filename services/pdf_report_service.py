@@ -14,6 +14,7 @@ from reportlab.platypus import (
     Spacer,
     Table,
     TableStyle,
+    KeepTogether,
 )
 from services.scan_service import FullScanResult
 class PdfReportService:
@@ -331,51 +332,47 @@ class PdfReportService:
         )
         score_data = [
             [
-                "Area",
+                "Commercial Area",
                 "Score",
             ],
             [
-                "Technical Health",
-                f"{result.score.technical_health} / 100",
-            ],
-            [
-                "Booking Journey",
+                "Technical Performance",
                 (
                     "Not Assessed"
                     if scan_incomplete
-                    else f"{result.score.booking_journey} / 100"
+                    else (
+                        f"{result.commercial_score.technical_score} / 100"
+                    )
                 ),
             ],
             [
-                "Mobile Experience",
+                "Hospitality Structure",
                 (
                     "Not Assessed"
                     if scan_incomplete
-                    else f"{result.score.mobile_experience} / 100"
+                    else (
+                        f"{result.commercial_score.site_quality_score} / 100"
+                    )
                 ),
             ],
             [
-                "Room Presentation",
-                (
-                    f"{result.score.room_presentation} / 100"
-                    if result.site_quality.has_rooms
-                    else "Not Assessed"
-                ),
-            ],
-            [
-                "Guest Information",
-                (
-                    f"{result.score.guest_information} / 100"
-                    if result.site_quality.has_guest_information
-                    else "Not Assessed"
-                ),
-            ],
-            [
-                "Analytics",
+                "Content Quality",
                 (
                     "Not Assessed"
                     if scan_incomplete
-                    else f"{result.score.analytics} / 100"
+                    else (
+                        f"{result.commercial_score.content_quality_score} / 100"
+                    )
+                ),
+            ],
+            [
+                "Commercial Website Score",
+                (
+                    "Not Fully Assessed"
+                    if scan_incomplete
+                    else (
+                        f"{result.commercial_score.commercial_score} / 100"
+                    )
                 ),
             ],
         ]
@@ -479,20 +476,29 @@ class PdfReportService:
             story.append(
                 PageBreak()
             )
-        story.append(
-            Paragraph(
-                "Verified Findings",
-                heading_style,
-            )
-        )
         if not client_issues:
             story.append(
+                KeepTogether(
+                    [
+                        Paragraph(
+                            "Verified Findings",
+                            heading_style,
+                        ),
+                        Paragraph(
+                            (
+                                "No verified priority issues "
+                                "were identified."
+                            ),
+                            body_style,
+                        ),
+                    ]
+                )
+            )
+        else:
+            story.append(
                 Paragraph(
-                    (
-                        "No verified priority issues "
-                        "were identified."
-                    ),
-                    body_style,
+                    "Verified Findings",
+                    heading_style,
                 )
             )
         for issue in client_issues:
