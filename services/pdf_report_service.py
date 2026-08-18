@@ -586,6 +586,7 @@ class PdfReportService:
         self,
         website_url: str,
         comparison,
+        escalation,
         output_path: str,
     ) -> str:
         output = Path(output_path)
@@ -749,6 +750,37 @@ class PdfReportService:
                 body_style,
             )
         )
+        story.append(
+            Paragraph(
+                "Escalation Status",
+                heading_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                (
+                    f"<b>Level:</b> "
+                    f"{escalation.level}"
+                ),
+                body_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                (
+                    "<b>Client Contact Required:</b> "
+                    f"{'Yes' if escalation.requires_contact else 'No'}"
+                ),
+                body_style,
+            )
+        )
+        for reason in escalation.reasons:
+            story.append(
+                Paragraph(
+                    f"- {reason}",
+                    body_style,
+                )
+            )
         if comparison.has_previous_scan:
             previous_display = (
                 "Not Assessed"

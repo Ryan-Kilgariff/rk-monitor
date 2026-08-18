@@ -14,6 +14,9 @@ from services.monitoring_service import MonitoringService
 from services.client_monitoring_report_service import (
     ClientMonitoringReportService,
 )
+from services.client_escalation_service import (
+    ClientEscalationService,
+)
 def run_single_scan() -> None:
     url = input(
         "\nWebsite URL: "
@@ -429,6 +432,29 @@ def run_client_monitoring() -> None:
         report_service.print_summary(
             comparison
         )
+        escalation_service = (
+            ClientEscalationService()
+        )
+        escalation = (
+            escalation_service.assess(
+                comparison
+            )
+        )
+        print()
+        print("ESCALATION STATUS")
+        print("-" * 60)
+        print(
+            f"Level: {escalation.level}"
+        )
+        print(
+            "Client Contact Required: "
+            f"{'Yes' if escalation.requires_contact else 'No'}"
+        )
+        print()
+        for reason in escalation.reasons:
+            print(
+                f"- {reason}"
+            )
         export_choice = input(
             "\nExport monitoring update to PDF? "
             "(y/n): "
@@ -448,6 +474,7 @@ def run_client_monitoring() -> None:
             pdf_service.export_monitoring_update(
                 website_url=url,
                 comparison=comparison,
+                escalation=escalation,
                 output_path=output_path,
             )
         )
