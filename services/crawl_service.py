@@ -396,6 +396,12 @@ class CrawlService:
             ".svg",
             ".ico",
             ".pdf",
+            ".doc",
+            ".docx",
+            ".xls",
+            ".xlsx",
+            ".ppt",
+            ".pptx",
             ".css",
             ".js",
             ".xml",
@@ -489,11 +495,7 @@ class CrawlService:
                 query="",
                 fragment="",
             ).geturl()
-            if (
-                parsed.path
-                and parsed.path != "/"
-            ):
-                clean_url = clean_url.rstrip("/")
+            clean_url = clean_url.rstrip("/")
             url_lower = clean_url.lower()
             if any(
                 term in url_lower

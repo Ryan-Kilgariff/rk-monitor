@@ -91,12 +91,20 @@ class MonitoringService:
             previous_keys = set(
                 previous_issues.keys()
             )
+            current_titles = set(
+                current_issues.values()
+            )
+            previous_titles = set(
+                previous_issues.values()
+            )
             new_issues = sorted(
                 current_issues[key]
                 for key in (
                     current_keys
                     - previous_keys
                 )
+                if current_issues[key]
+                not in previous_titles
             )
             resolved_issues = sorted(
                 previous_issues[key]
@@ -104,6 +112,8 @@ class MonitoringService:
                     previous_keys
                     - current_keys
                 )
+                if previous_issues[key]
+                not in current_titles
             )
             current_score = current_scan[
                 "overall_score"
