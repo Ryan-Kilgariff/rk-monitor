@@ -429,6 +429,32 @@ def run_client_monitoring() -> None:
         report_service.print_summary(
             comparison
         )
+        export_choice = input(
+            "\nExport monitoring update to PDF? "
+            "(y/n): "
+        ).strip().lower()
+        if export_choice != "y":
+            return
+        timestamp = datetime.now().strftime(
+            "%Y%m%d-%H%M%S"
+        )
+        output_path = (
+            f"exports/"
+            f"rk-monitor-monitoring-update-"
+            f"{timestamp}.pdf"
+        )
+        pdf_service = PdfReportService()
+        saved_path = (
+            pdf_service.export_monitoring_update(
+                website_url=url,
+                comparison=comparison,
+                output_path=output_path,
+            )
+        )
+        print()
+        print(
+            f"PDF saved: {saved_path}"
+        )
     elif choice == "5":
         url = input(
             "\nClient Website URL: "

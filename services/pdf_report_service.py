@@ -582,3 +582,340 @@ class PdfReportService:
             onLaterPages=self._draw_footer,
         )
         return str(output)
+    def export_monitoring_update(
+        self,
+        website_url: str,
+        comparison,
+        output_path: str,
+    ) -> str:
+        output = Path(output_path)
+        output.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        document = SimpleDocTemplate(
+            str(output),
+            pagesize=A4,
+            rightMargin=18 * mm,
+            leftMargin=18 * mm,
+            topMargin=18 * mm,
+            bottomMargin=18 * mm,
+        )
+        styles = getSampleStyleSheet()
+        title_style = ParagraphStyle(
+            "RKMonitoringTitle",
+            parent=styles["Title"],
+            alignment=TA_CENTER,
+            fontSize=20,
+            leading=24,
+            spaceAfter=8,
+        )
+        body_style = ParagraphStyle(
+            "RKMonitoringBody",
+            parent=styles["BodyText"],
+            fontSize=9.5,
+            leading=14.5,
+            spaceAfter=3,
+            textColor=colors.black,
+        )
+        heading_style = ParagraphStyle(
+            "RKMonitoringHeading",
+            parent=styles["Heading2"],
+            fontSize=12,
+            leading=15,
+            spaceBefore=16,
+            spaceAfter=8,
+        )
+        prepared_style = ParagraphStyle(
+            "RKMonitoringPrepared",
+            parent=body_style,
+            alignment=TA_CENTER,
+            fontSize=8.5,
+            leading=11,
+            spaceAfter=4,
+        )
+        url_style = ParagraphStyle(
+            "RKMonitoringUrl",
+            parent=body_style,
+            alignment=TA_CENTER,
+            fontSize=9,
+            leading=12,
+            spaceAfter=4,
+        )
+        score_style = ParagraphStyle(
+            "RKMonitoringScore",
+            parent=styles["Title"],
+            alignment=TA_CENTER,
+            fontSize=26,
+            leading=30,
+            spaceBefore=4,
+            spaceAfter=2,
+        )
+        score_label_style = ParagraphStyle(
+            "RKMonitoringScoreLabel",
+            parent=body_style,
+            alignment=TA_CENTER,
+            fontSize=10,
+            leading=13,
+            spaceAfter=6,
+        )
+        story = []
+        story.append(
+            Paragraph(
+                "RK MONITOR WEBSITE MONITORING UPDATE",
+                title_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                "Prepared by RK Hospitality Studio",
+                prepared_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                website_url,
+                url_style,
+            )
+        )
+        story.append(
+            Spacer(
+                1,
+                8 * mm,
+            )
+        )
+        current_score_display = (
+            "Not Assessed"
+            if comparison.current_score is None
+            else f"{comparison.current_score} / 100"
+        )
+        story.append(
+            Paragraph(
+                "Commercial Website Score",
+                score_label_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                f"<b>{current_score_display}</b>",
+                score_style,
+            )
+        )
+        if comparison.current_score is None:
+            summary_text = (
+                "The latest monitoring scan was not "
+                "complete enough to produce a reliable "
+                "commercial website score."
+            )
+        elif not comparison.has_previous_scan:
+            summary_text = (
+                "This assessment establishes the first "
+                "recorded commercial monitoring baseline. "
+                "Future complete scans will be compared "
+                "against this result."
+            )
+        elif comparison.score_change is None:
+            summary_text = (
+                "A previous monitoring baseline exists, "
+                "but a reliable score comparison could "
+                "not be calculated."
+            )
+        elif comparison.score_change > 0:
+            summary_text = (
+                "The commercial website score has improved "
+                f"by {comparison.score_change} point(s) "
+                "since the previous monitored assessment."
+            )
+        elif comparison.score_change < 0:
+            summary_text = (
+                "The commercial website score has decreased "
+                f"by {abs(comparison.score_change)} point(s) "
+                "since the previous monitored assessment."
+            )
+        else:
+            summary_text = (
+                "The commercial website score is unchanged "
+                "since the previous monitored assessment."
+            )
+        story.append(
+            Paragraph(
+                "Monitoring Summary",
+                heading_style,
+            )
+        )
+        story.append(
+            Paragraph(
+                summary_text,
+                body_style,
+            )
+        )
+        if comparison.has_previous_scan:
+            previous_display = (
+                "Not Assessed"
+                if comparison.previous_score is None
+                else f"{comparison.previous_score} / 100"
+            )
+            change_display = (
+                "Not Available"
+                if comparison.score_change is None
+                else (
+                    f"+{comparison.score_change}"
+                    if comparison.score_change > 0
+                    else str(comparison.score_change)
+                )
+            )
+            comparison_data = [
+                [
+                    "Monitoring Measure",
+                    "Result",
+                ],
+                [
+                    "Previous Commercial Score",
+                    previous_display,
+                ],
+                [
+                    "Current Commercial Score",
+                    current_score_display,
+                ],
+                [
+                    "Score Change",
+                    change_display,
+                ],
+            ]
+            comparison_table = Table(
+                comparison_data,
+                colWidths=[
+                    115 * mm,
+                    40 * mm,
+                ],
+            )
+            comparison_table.setStyle(
+                TableStyle(
+                    [
+                        (
+                            "FONTNAME",
+                            (0, 0),
+                            (-1, 0),
+                            "Helvetica-Bold",
+                        ),
+                        (
+                            "ALIGN",
+                            (1, 0),
+                            (1, -1),
+                            "RIGHT",
+                        ),
+                        (
+                            "BOTTOMPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            5,
+                        ),
+                        (
+                            "TOPPADDING",
+                            (0, 0),
+                            (-1, -1),
+                            5,
+                        ),
+                        (
+                            "LINEBELOW",
+                            (0, 0),
+                            (-1, 0),
+                            0.75,
+                            colors.grey,
+                        ),
+                        (
+                            "LINEBELOW",
+                            (0, 1),
+                            (-1, -2),
+                            0.25,
+                            colors.lightgrey,
+                        ),
+                    ]
+                )
+            )
+            story.append(
+                Spacer(
+                    1,
+                    3 * mm,
+                )
+            )
+            story.append(
+                comparison_table
+            )
+        story.append(
+            Paragraph(
+                "New Issues",
+                heading_style,
+            )
+        )
+        if comparison.new_issues:
+            for issue in comparison.new_issues:
+                story.append(
+                    Paragraph(
+                        f"- {issue}",
+                        body_style,
+                    )
+                )
+        else:
+            story.append(
+                Paragraph(
+                    "No new monitored issues were identified.",
+                    body_style,
+                )
+            )
+        story.append(
+            Paragraph(
+                "Resolved Issues",
+                heading_style,
+            )
+        )
+        if comparison.resolved_issues:
+            for issue in comparison.resolved_issues:
+                story.append(
+                    Paragraph(
+                        f"- {issue}",
+                        body_style,
+                    )
+                )
+        else:
+            story.append(
+                Paragraph(
+                    "No previously monitored issues were resolved.",
+                    body_style,
+                )
+            )
+        story.append(
+            Paragraph(
+                "Recommended Next Step",
+                heading_style,
+            )
+        )
+        if comparison.current_score is None:
+            recommendation = (
+                "Repeat the monitoring scan when the website "
+                "can be fully assessed."
+            )
+        elif comparison.new_issues:
+            recommendation = (
+                "Review the new monitored issues above and "
+                "prioritise any changes that may affect the "
+                "guest journey or direct booking experience."
+            )
+        else:
+            recommendation = (
+                "Continue scheduled website monitoring and "
+                "review any material changes identified in "
+                "future assessments."
+            )
+        story.append(
+            Paragraph(
+                recommendation,
+                body_style,
+            )
+        )
+        document.build(
+            story,
+            onFirstPage=self._draw_footer,
+            onLaterPages=self._draw_footer,
+        )
+        return str(output)
