@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from concurrent.futures import ThreadPoolExecutor
 import requests
 @dataclass
 class LinkCheckResult:
@@ -63,9 +64,14 @@ class LinkChecker:
         urls: list[str],
         limit: int = 30,
     ) -> list[LinkCheckResult]:
-        results = []
-        for url in urls[:limit]:
-            results.append(
-                self.check(url)
+        urls_to_check = urls[:limit]
+        with ThreadPoolExecutor(
+            max_workers=6
+        ) as executor:
+            results = list(
+                executor.map(
+                    self.check,
+                    urls_to_check,
+                )
             )
         return results

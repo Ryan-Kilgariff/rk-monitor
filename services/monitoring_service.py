@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from core.database import get_connection
 @dataclass
-@dataclass
 class ScanComparison:
     current_scan_id: int
     previous_scan_id: int | None

@@ -105,14 +105,24 @@ class ReportService:
             f"SSL Verification: "
             f"{'FAILED' if scan.ssl_verification_failed else 'Passed'}"
         )
-        print(
-            f"Mobile Viewport: "
-            f"{'Yes' if scan.has_mobile_viewport else 'No'}"
-        )
-        print(
-            f"Google Analytics: "
-            f"{'Detected' if scan.has_google_analytics else 'Not detected'}"
-        )
+        if result.assessment_status == "PARTIAL":
+            print(
+                "Mobile Viewport: "
+                "Not Assessed"
+            )
+            print(
+                "Google Analytics: "
+                "Not Assessed"
+            )
+        else:
+            print(
+                f"Mobile Viewport: "
+                f"{'Yes' if scan.has_mobile_viewport else 'No'}"
+            )
+            print(
+                f"Google Analytics: "
+                f"{'Detected' if scan.has_google_analytics else 'Not detected'}"
+            )
         print()
         print("BOOKING")
         print("-" * 60)
@@ -378,14 +388,24 @@ class ReportService:
                     "compared against this baseline."
                 )
             else:
-                print(
-                    f"Previous Trusted Score: "
-                    f"{comparison.previous_score}"
-                )
-                print(
-                    f"Current Trusted Score: "
-                    f"{comparison.current_score}"
-                )
+                if comparison.current_score is None:
+                    print(
+                        "Current Trusted Score: "
+                        "Not Assessed"
+                    )
+                    print(
+                        "Score comparison unavailable "
+                        "for partial assessment."
+                    )
+                else:
+                    print(
+                        f"Previous Trusted Score: "
+                        f"{comparison.previous_score}"
+                    )
+                    print(
+                        f"Current Trusted Score: "
+                        f"{comparison.current_score}"
+                    )
                 if (
                     comparison.previous_detected_score
                     is not None

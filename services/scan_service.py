@@ -139,12 +139,6 @@ class ScanService:
                     homepage_content_text,
                 )
             )
-            domain_identity = (
-                domain_identity_service.analyse(
-                    scan_result.page_title,
-                    homepage_content_text,
-                )
-            )
             # ----------------------------------------------
             # BOOKING DETECTION
             # ----------------------------------------------
@@ -172,9 +166,13 @@ class ScanService:
             # LINK HEALTH
             # ----------------------------------------------
             link_checker = LinkChecker()
+            page_links = crawler.discover_pages(
+                scan_result.internal_links,
+                max_pages=30,
+            )
             link_results = (
                 link_checker.check_many(
-                    scan_result.internal_links
+                    page_links
                 )
             )
         # --------------------------------------------------
@@ -356,6 +354,23 @@ class ScanService:
                 issues,
             )
         )
+        scan_is_partial = (
+            not scan_result.successful
+            or (
+                domain_identity is not None
+                and domain_identity.mismatch_detected
+            )
+        )
+        stored_detected_score = (
+            None
+            if scan_is_partial
+            else detected_score.overall
+        )
+        stored_overall_score = (
+            None
+            if scan_is_partial
+            else score.overall
+        )
         # --------------------------------------------------
         # 10. SAVE SCAN
         # --------------------------------------------------
@@ -366,8 +381,8 @@ class ScanService:
             link_results=link_results,
             booking_provider=booking_provider,
             booking_links=booking_links,
-            detected_score=detected_score.overall,
-            overall_score=score.overall,
+            detected_score=stored_detected_score,
+            overall_score=stored_overall_score,
         )
         # --------------------------------------------------
         # 11. MONITORING COMPARISON

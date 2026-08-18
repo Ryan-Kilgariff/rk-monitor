@@ -56,6 +56,7 @@ class CrawlService:
         links: list[str],
     ) -> list[tuple[str, str]]:
         important_pages = []
+        seen_urls = set()
         for url in links:
             if not self._is_page_url(url):
                 continue
@@ -71,9 +72,17 @@ class CrawlService:
                 path_words,
             )
             if page_type:
+                normalised_url = (
+                    url.rstrip("/")
+                )
+                if normalised_url in seen_urls:
+                    continue
+                seen_urls.add(
+                    normalised_url
+                )
                 important_pages.append(
                     (url, page_type)
-            )
+                )
         return important_pages[: self.max_pages]
     def crawl(
         self,
@@ -396,6 +405,19 @@ class CrawlService:
             ".mp3",
             ".wav",
         )
+        path_parts = [
+            part
+            for part in path.strip("/").split("/")
+            if part
+        ]
+
+        if (
+            len(path_parts) >= 2
+            and path_parts[0].startswith(
+                "new-gallery"
+            )
+        ):
+            return False
         return not path.endswith(
             excluded_extensions
         )
@@ -451,6 +473,9 @@ class CrawlService:
             "basket",
             "mailto:",
             "tel:",
+            "designed-and-developed-by",
+            "website-designed-by",
+            "website-by",
         )
         seen = set()
         for url in links:
