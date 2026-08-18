@@ -30,10 +30,16 @@ class ReportService:
         print("=" * 60)
         if client_mode:
             print()
-            print(
-                f"Overall Website Score: "
-                f"{score.overall} / 100"
-            )
+            if result.assessment_status == "PARTIAL":
+                print(
+                    "Commercial Website Score: "
+                    "Not Fully Assessed"
+                )
+            else:
+                print(
+                    f"Commercial Website Score: "
+                    f"{result.commercial_score.commercial_score} / 100"
+                )
             print(
                 "Assessment Status: "
                 f"{result.assessment_status.title()}"

@@ -475,9 +475,10 @@ class PdfReportService:
                         body_style,
                     )
                 )
-        story.append(
-            PageBreak()
-        )
+        if client_issues:
+            story.append(
+                PageBreak()
+            )
         story.append(
             Paragraph(
                 "Verified Findings",

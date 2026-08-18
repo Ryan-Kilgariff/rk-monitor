@@ -35,7 +35,7 @@ class ScanRepository:
                     has_mobile_viewport,
                     has_google_analytics,
                     ssl_verification_failed,
-                    scan_result.ssl_error_message,
+                    ssl_error_message,
                     booking_provider,
                     booking_links_found,
                     internal_links_found,
