@@ -25,21 +25,43 @@ class IssueReviewService:
             cursor = conn.cursor()
             cursor.execute(
                 """
+                WITH ranked_issues AS (
+                    SELECT
+                        issues.id AS issue_id,
+                        websites.url AS website_url,
+                        issues.title,
+                        issues.severity,
+                        issues.category,
+                        issues.confidence,
+                        issues.evidence,
+                        issues.review_status,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY
+                                websites.id,
+                                COALESCE(
+                                    issues.issue_code,
+                                    'title:' || issues.title
+                                )
+                            ORDER BY issues.id DESC
+                        ) AS issue_rank
+                    FROM issues
+                    JOIN scans
+                        ON issues.scan_id = scans.id
+                    JOIN websites
+                        ON scans.website_id = websites.id
+                )
                 SELECT
-                    issues.id AS issue_id,
-                    websites.url AS website_url,
-                    issues.title,
-                    issues.severity,
-                    issues.category,
-                    issues.confidence,
-                    issues.evidence
-                FROM issues
-                JOIN scans
-                    ON issues.scan_id = scans.id
-                JOIN websites
-                    ON scans.website_id = websites.id
-                WHERE issues.review_status = 'PENDING'
-                ORDER BY issues.id DESC
+                    issue_id,
+                    website_url,
+                    title,
+                    severity,
+                    category,
+                    confidence,
+                    evidence
+                FROM ranked_issues
+                WHERE issue_rank = 1
+                AND review_status = 'PENDING'
+                ORDER BY issue_id DESC
                 """
             )
             rows = cursor.fetchall()
