@@ -166,6 +166,176 @@ class MonitoringService:
             )
         finally:
             conn.close()
+    def compare_latest_to_previous_complete(
+        self,
+        website_url: str,
+    ) -> ScanComparison:
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT id
+                FROM websites
+                WHERE url = ?
+                """,
+                (website_url,),
+            )
+            website = cursor.fetchone()
+            if website is None:
+                raise ValueError(
+                    "Website not found."
+                )
+            website_id = website["id"]
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    detected_score,
+                    overall_score,
+                    commercial_score
+                FROM scans
+                WHERE website_id = ?
+                ORDER BY scanned_at DESC, id DESC
+                LIMIT 1
+                """,
+                (website_id,),
+            )
+            current_scan = cursor.fetchone()
+            if current_scan is None:
+                raise ValueError(
+                    "No scans found."
+                )
+            cursor.execute(
+                """
+                SELECT
+                    id,
+                    detected_score,
+                    overall_score,
+                    commercial_score
+                FROM scans
+                WHERE website_id = ?
+                AND id != ?
+                AND commercial_score IS NOT NULL
+                ORDER BY scanned_at DESC, id DESC
+                LIMIT 1
+                """,
+                (
+                    website_id,
+                    current_scan["id"],
+                ),
+            )
+            previous_scan = cursor.fetchone()
+            if previous_scan is None:
+                return ScanComparison(
+                    current_scan_id=current_scan["id"],
+                    previous_scan_id=None,
+                    current_score=current_scan[
+                        "commercial_score"
+                    ],
+                    previous_score=None,
+                    score_change=None,
+                    current_detected_score=current_scan[
+                        "detected_score"
+                    ],
+                    previous_detected_score=None,
+                    detected_score_change=None,
+                    new_issues=[],
+                    resolved_issues=[],
+                    has_previous_scan=False,
+                )
+            current_score = current_scan[
+                "commercial_score"
+            ]
+            previous_score = previous_scan[
+                "commercial_score"
+            ]
+            score_change = None
+            if (
+                current_score is not None
+                and previous_score is not None
+            ):
+                score_change = (
+                    current_score
+                    - previous_score
+                )
+            current_detected_score = current_scan[
+                "detected_score"
+            ]
+            previous_detected_score = previous_scan[
+                "detected_score"
+            ]
+            detected_score_change = None
+            if (
+                current_detected_score is not None
+                and previous_detected_score is not None
+            ):
+                detected_score_change = (
+                    current_detected_score
+                    - previous_detected_score
+                )
+            new_issues: list[str] = []
+            resolved_issues: list[str] = []
+            if current_score is not None:
+                current_issues = self._get_issue_map(
+                    cursor,
+                    current_scan["id"],
+                )
+                previous_issues = self._get_issue_map(
+                    cursor,
+                    previous_scan["id"],
+                )
+                current_keys = set(
+                    current_issues.keys()
+                )
+                previous_keys = set(
+                    previous_issues.keys()
+                )
+                current_titles = set(
+                    current_issues.values()
+                )
+                previous_titles = set(
+                    previous_issues.values()
+                )
+                new_issues = sorted(
+                    current_issues[key]
+                    for key in (
+                        current_keys
+                        - previous_keys
+                    )
+                    if current_issues[key]
+                    not in previous_titles
+                )
+                resolved_issues = sorted(
+                    previous_issues[key]
+                    for key in (
+                        previous_keys
+                        - current_keys
+                    )
+                    if previous_issues[key]
+                    not in current_titles
+                )
+            return ScanComparison(
+                current_scan_id=current_scan["id"],
+                previous_scan_id=previous_scan["id"],
+                current_score=current_score,
+                previous_score=previous_score,
+                score_change=score_change,
+                current_detected_score=(
+                    current_detected_score
+                ),
+                previous_detected_score=(
+                    previous_detected_score
+                ),
+                detected_score_change=(
+                    detected_score_change
+                ),
+                new_issues=new_issues,
+                resolved_issues=resolved_issues,
+                has_previous_scan=True,
+            )
+        finally:
+            conn.close()
     def _get_issue_map(
         self,
         cursor,

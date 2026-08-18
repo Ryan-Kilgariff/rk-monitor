@@ -7,6 +7,13 @@ from datetime import datetime
 from services.csv_service import CsvService
 from services.issue_review_service import IssueReviewService
 from services.pdf_report_service import PdfReportService
+from services.client_monitoring_service import (
+    ClientMonitoringService,
+)
+from services.monitoring_service import MonitoringService
+from services.client_monitoring_report_service import (
+    ClientMonitoringReportService,
+)
 def run_single_scan() -> None:
     url = input(
         "\nWebsite URL: "
@@ -261,6 +268,238 @@ def run_issue_review() -> None:
         print(
             f"Issue marked as {status}."
         )
+def run_client_monitoring() -> None:
+    service = ClientMonitoringService()
+    print()
+    print("CLIENT MONITORING")
+    print("-" * 60)
+    print("1. View Active Clients")
+    print("2. Activate Existing Website")
+    print("3. Deactivate Client")
+    print("4. Run Monitoring Scan")
+    print("5. View Client History")
+    print("6. View Due Monitoring")
+    print("7. Back")
+    choice = input(
+        "\nSelect option: "
+    ).strip()
+    if choice == "1":
+        clients = service.list_active()
+        if not clients:
+            print()
+            print(
+                "No active monitored clients."
+            )
+            return
+        print()
+        print("ACTIVE CLIENTS")
+        print("-" * 60)
+        for client in clients:
+            print()
+            print(
+                f"Website ID: "
+                f"{client.website_id}"
+            )
+            print(
+                f"Name: "
+                f"{client.name or 'Unknown'}"
+            )
+            print(
+                f"URL: {client.url}"
+            )
+            print(
+                f"Frequency: "
+                f"{client.monitoring_frequency}"
+            )
+    elif choice == "2":
+        url = input(
+            "\nWebsite URL: "
+        ).strip()
+        print()
+        print(
+            "Monitoring frequency:"
+        )
+        print("1. Weekly")
+        print("2. Fortnightly")
+        print("3. Monthly")
+        print("4. Quarterly")
+        frequency_choice = input(
+            "\nSelect frequency: "
+        ).strip()
+        frequency_map = {
+            "1": "WEEKLY",
+            "2": "FORTNIGHTLY",
+            "3": "MONTHLY",
+            "4": "QUARTERLY",
+        }
+        frequency = frequency_map.get(
+            frequency_choice
+        )
+        if frequency is None:
+            print()
+            print(
+                "Invalid monitoring frequency."
+            )
+            return
+        try:
+            client = service.activate(
+                url,
+                frequency,
+            )
+        except ValueError as exc:
+            print()
+            print(
+                f"CLIENT ERROR: {exc}"
+            )
+            return
+        print()
+        print(
+            "Client monitoring activated."
+        )
+        print(
+            f"Website: {client.url}"
+        )
+        print(
+            f"Frequency: "
+            f"{client.monitoring_frequency}"
+        )
+    elif choice == "3":
+        url = input(
+            "\nWebsite URL: "
+        ).strip()
+        try:
+            client = service.deactivate(
+                url
+            )
+        except ValueError as exc:
+            print()
+            print(
+                f"CLIENT ERROR: {exc}"
+            )
+            return
+        print()
+        print(
+            "Client monitoring deactivated."
+        )
+        print(
+            f"Website: {client.url}"
+        )
+    elif choice == "4":
+        url = input(
+            "\nClient Website URL: "
+        ).strip()
+        active_clients = service.list_active()
+        active_urls = {
+            client.url
+            for client in active_clients
+        }
+        if url not in active_urls:
+            print()
+            print(
+                "Website is not an active "
+                "monitored client."
+            )
+            return
+        print()
+        print(
+            "Running monitoring scan...\n"
+        )
+        scan_service = ScanService()
+        try:
+            scan_service.run(
+                url
+            )
+        except RuntimeError as exc:
+            print(
+                f"SCAN FAILED: {exc}"
+            )
+            return
+        monitoring_service = (
+            MonitoringService()
+        )
+        comparison = (
+            monitoring_service
+            .compare_latest_to_previous_complete(
+                url
+            )
+        )
+        report_service = (
+            ClientMonitoringReportService()
+        )
+        report_service.print_summary(
+            comparison
+        )
+    elif choice == "5":
+        url = input(
+            "\nClient Website URL: "
+        ).strip()
+        try:
+            history = service.get_history(
+                url
+            )
+        except ValueError as exc:
+            print()
+            print(
+                f"CLIENT ERROR: {exc}"
+            )
+            return
+        print()
+        print("MONITORING HISTORY")
+        print("-" * 60)
+        if not history:
+            print(
+                "No commercial monitoring "
+                "history available."
+            )
+            return
+        for entry in history:
+            print(
+                f"{entry.scanned_at}  "
+                f"Score: {entry.commercial_score}  "
+                f"Scan ID: {entry.scan_id}"
+            )
+    elif choice == "6":
+        statuses = service.get_due_statuses()
+        print()
+        print("CLIENTS DUE FOR MONITORING")
+        print("-" * 60)
+        if not statuses:
+            print(
+                "No active monitored clients."
+            )
+            return
+        for status in statuses:
+            print()
+            print(
+                f"Name: "
+                f"{status.name or 'Unknown'}"
+            )
+            print(
+                f"URL: {status.url}"
+            )
+            print(
+                f"Frequency: "
+                f"{status.monitoring_frequency}"
+            )
+            print(
+                f"Last Scan: "
+                f"{status.last_scan_at or 'None'}"
+            )
+            print(
+                f"Next Due: "
+                f"{status.next_due_at or 'Now'}"
+            )
+            print(
+                "Status: "
+                f"{'DUE' if status.is_due else 'Not Due'}"
+            )
+    elif choice == "7":
+        return
+    else:
+        print()
+        print(
+            "Invalid option."
+        )
 def main() -> None:
     initialize_database()
     print()
@@ -274,7 +513,8 @@ def main() -> None:
     print("3. Scan Prospects From CSV")
     print("4. Review Pending Issues")
     print("5. Client Website Report")
-    print("6. Exit")
+    print("6. Client Monitoring")
+    print("7. Exit")
     choice = input(
         "\nSelect option: "
     ).strip()
@@ -289,6 +529,8 @@ def main() -> None:
     elif choice == "5":
         run_client_report()
     elif choice == "6":
+        run_client_monitoring()
+    elif choice == "7":
         print(
             "\nGoodbye."
         )

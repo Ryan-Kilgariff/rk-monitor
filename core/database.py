@@ -18,6 +18,8 @@ def initialize_database() -> None:
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
                 url TEXT NOT NULL UNIQUE,
+                is_active_client INTEGER NOT NULL DEFAULT 0,
+                monitoring_frequency TEXT,
                 created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -41,6 +43,7 @@ def initialize_database() -> None:
                 broken_links_found INTEGER NOT NULL DEFAULT 0,
                 detected_score INTEGER,
                 overall_score INTEGER,
+                commercial_score INTEGER,
                 scan_successful INTEGER NOT NULL DEFAULT 0,
                 error_message TEXT,
                 scanned_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -61,6 +64,35 @@ def initialize_database() -> None:
                 """
                 ALTER TABLE scans
                 ADD COLUMN detected_score INTEGER
+                """
+            )
+        if "commercial_score" not in scan_columns:
+            cursor.execute(
+                """
+                ALTER TABLE scans
+                ADD COLUMN commercial_score INTEGER
+                """
+            )
+        cursor.execute(
+            "PRAGMA table_info(websites)"
+        )
+        website_columns = {
+            row[1]
+            for row in cursor.fetchall()
+        }
+        if "is_active_client" not in website_columns:
+            cursor.execute(
+                """
+                ALTER TABLE websites
+                ADD COLUMN is_active_client INTEGER
+                NOT NULL DEFAULT 0
+                """
+            )
+        if "monitoring_frequency" not in website_columns:
+            cursor.execute(
+                """
+                ALTER TABLE websites
+                ADD COLUMN monitoring_frequency TEXT
                 """
             )
         cursor.execute(

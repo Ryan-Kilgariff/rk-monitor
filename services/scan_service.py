@@ -371,6 +371,11 @@ class ScanService:
             if scan_is_partial
             else score.overall
         )
+        stored_commercial_score = (
+            None
+            if scan_is_partial
+            else commercial_score.commercial_score
+        )
         # --------------------------------------------------
         # 10. SAVE SCAN
         # --------------------------------------------------
@@ -383,6 +388,7 @@ class ScanService:
             booking_links=booking_links,
             detected_score=stored_detected_score,
             overall_score=stored_overall_score,
+            commercial_score=stored_commercial_score,
         )
         # --------------------------------------------------
         # 11. MONITORING COMPARISON

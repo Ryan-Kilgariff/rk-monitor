@@ -12,6 +12,7 @@ class ScanRepository:
         booking_links,
         detected_score: int,
         overall_score: int,
+        commercial_score: int,
     ) -> int:
         conn = get_connection()
         try:
@@ -42,10 +43,11 @@ class ScanRepository:
                     broken_links_found,
                     detected_score,
                     overall_score,
+                    commercial_score,
                     scan_successful,
                     error_message
                 )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     website_id,
@@ -63,6 +65,7 @@ class ScanRepository:
                     broken_links,
                     detected_score,
                     overall_score,
+                    commercial_score,
                     int(scan_result.successful),
                     scan_result.error_message,
                 ),
